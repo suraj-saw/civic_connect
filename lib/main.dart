@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       theme: TAppTheme.light(seedColor: Colors.blue),
       darkTheme: TAppTheme.dark(seedColor: Colors.blue),
-      home: const RootPage(), // ✅ SINGLE auth entry
+      home: const RootPage(),
       getPages: AppPages.pages,
     );
   }

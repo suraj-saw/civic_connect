@@ -46,7 +46,6 @@ class RootPage extends StatelessWidget {
 
             final role = userSnapshot.data!.get('role');
 
-            // ✅ RETURN widget instead of navigating
             if (role == 'admin') {
               return const HomeAdmin();
             } else {

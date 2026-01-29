@@ -17,9 +17,6 @@ class SignInController extends GetxController {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-
-      // ✅ DO NOT NAVIGATE
-      // RootPage will handle everything
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Sign In Failed", e.message ?? "Authentication failed");
     } finally {
