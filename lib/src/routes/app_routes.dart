@@ -6,4 +6,6 @@ class AppRoutes {
 
   static const String homeAdmin = '/homeAdmin';
   static const String homeCitizen = '/homeCitizen';
+
+  static const String profile = '/profile';
 }
