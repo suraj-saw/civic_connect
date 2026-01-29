@@ -1,4 +1,3 @@
-import 'package:civic_connect/src/controllers/auth/auth_controller.dart';
 import 'package:civic_connect/src/pages/root/root_page.dart';
 import 'package:civic_connect/src/routes/app_pages.dart';
 import 'package:civic_connect/src/themes/app_theme.dart';
@@ -14,9 +13,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // AuthController must be permanent
-  Get.put(AuthController(), permanent: true);
-
   runApp(const MyApp());
 }
 
@@ -31,7 +27,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       theme: TAppTheme.light(seedColor: Colors.blue),
       darkTheme: TAppTheme.dark(seedColor: Colors.blue),
-      home: const RootPage(),
+      home: const RootPage(), // ✅ SINGLE auth entry
       getPages: AppPages.pages,
     );
   }

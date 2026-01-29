@@ -18,7 +18,7 @@ class SignUpController extends GetxController {
 
   String get formattedPhone => '+91${phoneController.text.trim()}';
 
-  /// 🔎 STEP 0: Check Firestore for existing email / phone
+  /// STEP 0: Check Firestore for existing email / phone
   Future<bool> _userAlreadyExists() async {
     final usersRef = FirebaseFirestore.instance.collection('users');
 
@@ -47,7 +47,7 @@ class SignUpController extends GetxController {
     return false;
   }
 
-  /// 📲 STEP 1: Send OTP
+  /// STEP 1: Send OTP
   Future<void> sendOtp() async {
     if (await _userAlreadyExists()) return;
 
@@ -73,7 +73,7 @@ class SignUpController extends GetxController {
     }
   }
 
-  /// 🔐 STEP 2: Verify OTP → create email user → store Firestore
+  /// STEP 2: Verify OTP → create email user → store Firestore
   Future<void> verifyOtp() async {
     if (_verificationId == null) {
       Get.snackbar("Error", "OTP session expired");
@@ -83,7 +83,7 @@ class SignUpController extends GetxController {
     isLoading.value = true;
 
     try {
-      // 1️⃣ Verify phone OTP (TEMPORARY SIGN-IN)
+      // Verify phone OTP (TEMPORARY SIGN-IN)
       final phoneCredential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otpController.text.trim(),
@@ -92,17 +92,17 @@ class SignUpController extends GetxController {
       final phoneUserCred =
       await FirebaseAuth.instance.signInWithCredential(phoneCredential);
 
-      // 2️⃣ DELETE phone-auth user immediately
+      // DELETE phone-auth user immediately
       await phoneUserCred.user!.delete();
 
-      // 3️⃣ Create email/password auth user ONLY
+      // Create email/password auth user ONLY
       final emailUserCred =
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // 4️⃣ Store user in Firestore
+      // Store user in Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(emailUserCred.user!.uid)

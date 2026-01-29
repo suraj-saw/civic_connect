@@ -5,12 +5,12 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(child: SingleChildScrollView(
+    return SafeArea(
+      child: SingleChildScrollView(
         child: Center(
           child: Text("Profile Page"),
         ),
-      )),
+      ),
     );
   }
 }

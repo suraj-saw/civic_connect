@@ -8,4 +8,6 @@ class AppRoutes {
   static const String homeCitizen = '/homeCitizen';
 
   static const String profile = '/profile';
+  static const String citizenMap = '/citizenMap';
+  static const String citizenDashboard = '/citizenDashboard';
 }

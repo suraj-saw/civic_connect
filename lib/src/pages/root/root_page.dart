@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import '../../routes/app_routes.dart';
 import '../sign_in/sign_in_page.dart';
+import '../home/admin/home_admin.dart';
+import '../home/citizen/home_citizen.dart';
 
 class RootPage extends StatelessWidget {
   const RootPage({super.key});
@@ -13,64 +13,49 @@ class RootPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // ⏳ Waiting for Firebase to restore session
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, authSnapshot) {
+        // Waiting for Firebase
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // ❌ Not logged in
-        if (!snapshot.hasData) {
+        // Not logged in
+        if (!authSnapshot.hasData) {
           return SignInPage();
         }
 
-        // ✅ Logged in → decide by role
-        return const _RoleResolver();
-      },
-    );
-  }
-}
+        // Logged in → fetch role
+        final uid = authSnapshot.data!.uid;
 
-class _RoleResolver extends StatelessWidget {
-  const _RoleResolver();
+        return FutureBuilder<DocumentSnapshot>(
+          future:
+          FirebaseFirestore.instance.collection('users').doc(uid).get(),
+          builder: (context, userSnapshot) {
+            if (userSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-  @override
-  Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+              FirebaseAuth.instance.signOut();
+              return SignInPage();
+            }
 
-    return FutureBuilder<DocumentSnapshot>(
-      future:
-      FirebaseFirestore.instance.collection('users').doc(uid).get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+            final role = userSnapshot.data!.get('role');
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          // Safety fallback
-          FirebaseAuth.instance.signOut();
-          return SignInPage();
-        }
-
-        final role = snapshot.data!.get('role');
-
-        // 🔀 Redirect ONCE
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (role == 'admin') {
-            Get.offAllNamed(AppRoutes.homeAdmin);
-          } else {
-            Get.offAllNamed(AppRoutes.homeCitizen);
-          }
-        });
-
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+            // ✅ RETURN widget instead of navigating
+            if (role == 'admin') {
+              return const HomeAdmin();
+            } else {
+              return const HomeCitizen();
+            }
+          },
         );
       },
     );
   }
 }
+
