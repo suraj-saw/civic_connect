@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/bottom_navigation/home_citizen_controller.dart';
+import '../../issues/my_reported_issues_page.dart';
 import '../../profile/profile_page.dart';
 import 'dashboard_page.dart';
 import 'map_page.dart';
@@ -13,10 +14,10 @@ class HomeCitizen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(HomeCitizenController());
 
-    final List<Widget> screens = const [
-      DashboardPage(),
-      MapPage(),
-      ProfilePage(),
+    final List<Widget> screens = [
+      const DashboardPage(), // index 0
+      const MapPage(),       // index 1
+      ProfilePage(),         // index 2
     ];
 
     return Scaffold(
@@ -54,3 +55,4 @@ class HomeCitizen extends StatelessWidget {
     );
   }
 }
+

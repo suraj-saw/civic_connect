@@ -2,6 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -45,5 +46,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>Location is required to report issues accurately.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>Camera is required to report issues.</string>
+
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone is required for voice description.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Gallery access is required to upload issue photos.</string>
+
+
 </dict>
 </plist>
