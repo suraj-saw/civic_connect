@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -34,7 +33,7 @@ class ReportIssuePage extends StatelessWidget {
               /* ===================== PHOTO ===================== */
 
               Text(
-                "Add Photo",
+                "Capture Photo",
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
@@ -43,36 +42,19 @@ class ReportIssuePage extends StatelessWidget {
                 final File? image = issueController.selectedImage.value;
 
                 if (image == null) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text("Camera"),
-                          onPressed: () async {
-                            final allowed =
-                            await permissionController.requestCamera();
-                            if (!allowed) return;
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text("Take Photo"),
+                      onPressed: () async {
+                        final allowed =
+                        await permissionController.requestCamera();
+                        if (!allowed) return;
 
-                            await issueController.pickFromCamera();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.photo_library),
-                          label: const Text("Gallery"),
-                          onPressed: () async {
-                            final allowed =
-                            await permissionController.requestGallery();
-                            if (!allowed) return;
-
-                            await issueController.pickFromGallery();
-                          },
-                        ),
-                      ),
-                    ],
+                        await issueController.pickFromCamera();
+                      },
+                    ),
                   );
                 }
 
@@ -108,7 +90,7 @@ class ReportIssuePage extends StatelessWidget {
               /* ===================== VIDEO ===================== */
 
               Text(
-                "Or Add Video",
+                "Or Record Video",
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
@@ -151,37 +133,20 @@ class ReportIssuePage extends StatelessWidget {
                   );
                 }
 
-                // Show video options
-                return Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.videocam),
-                        label: const Text("Record"),
-                        onPressed: () async {
-                          final allowed =
-                          await permissionController.requestCamera();
-                          if (!allowed) return;
+                // Show record button
+                return SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.videocam),
+                    label: const Text("Record Video"),
+                    onPressed: () async {
+                      final allowed =
+                      await permissionController.requestCamera();
+                      if (!allowed) return;
 
-                          await issueController.startVideoRecording();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.video_library),
-                        label: const Text("Gallery"),
-                        onPressed: () async {
-                          final allowed =
-                          await permissionController.requestGallery();
-                          if (!allowed) return;
-
-                          await issueController.pickVideoFromGallery();
-                        },
-                      ),
-                    ),
-                  ],
+                      await issueController.startVideoRecording();
+                    },
+                  ),
                 );
               }),
 

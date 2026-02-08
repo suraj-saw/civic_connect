@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
@@ -45,15 +46,6 @@ class ReportIssueController extends GetxController {
     await _captureLocation(source: "camera");
   }
 
-  Future<void> pickFromGallery() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (image == null) return;
-
-    selectedImage.value = File(image.path);
-    await _captureLocation(source: "gallery");
-  }
-
   void removeImage() {
     selectedImage.value = null;
     // Don't clear location if video exists
@@ -63,21 +55,6 @@ class ReportIssueController extends GetxController {
   }
 
   /* ================= VIDEO ================= */
-
-  Future<void> pickVideoFromGallery() async {
-    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
-
-    if (video == null) return;
-
-    recordedVideo.value = File(video.path);
-    await _captureLocation(source: "video_gallery");
-
-    Get.snackbar(
-      "Video Selected",
-      "Video attached successfully",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
 
   Future<void> startVideoRecording() async {
     try {

@@ -43,32 +43,7 @@ class IssuePermissionController extends GetxController {
     } else {
       Get.snackbar(
         "Permission Denied",
-        "Camera permission is required",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-  }
-
-  /// Gallery (for photos AND videos)
-  Future<bool> requestGallery() async {
-    if (kIsWeb) return true;
-
-    // Try photos permission first
-    final photosStatus = await Permission.photos.status;
-    if (photosStatus.isGranted) return true;
-
-    final photosResult = await Permission.photos.request();
-
-    if (photosResult.isGranted) {
-      return true;
-    } else if (photosResult.isPermanentlyDenied) {
-      _showSettingsDialog("gallery");
-      return false;
-    } else {
-      Get.snackbar(
-        "Permission Denied",
-        "Gallery permission is required",
+        "Camera permission is required to capture photo/video",
         snackPosition: SnackPosition.BOTTOM,
       );
       return false;
