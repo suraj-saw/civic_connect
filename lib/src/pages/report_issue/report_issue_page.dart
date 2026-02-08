@@ -1,6 +1,7 @@
+
+
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -44,15 +45,14 @@ class ReportIssuePage extends StatelessWidget {
                 if (image == null) {
                   return SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
+                    child: ElevatedButton.icon(
                       icon: const Icon(Icons.camera_alt),
                       label: const Text("Take Photo"),
                       onPressed: () async {
-                        final allowed =
-                        await permissionController.requestCamera();
+                        final allowed = await permissionController.requestCamera();
                         if (!allowed) return;
 
-                        await issueController.pickFromCamera();
+                        await issueController.capturePhoto();
                       },
                     ),
                   );
@@ -64,7 +64,7 @@ class ReportIssuePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       child: Image.file(
                         image,
-                        height: 180,
+                        height: 200,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
@@ -75,8 +75,7 @@ class ReportIssuePage extends StatelessWidget {
                       child: CircleAvatar(
                         backgroundColor: Colors.black54,
                         child: IconButton(
-                          icon:
-                          const Icon(Icons.close, color: Colors.white),
+                          icon: const Icon(Icons.close, color: Colors.white),
                           onPressed: issueController.removeImage,
                         ),
                       ),
@@ -97,56 +96,26 @@ class ReportIssuePage extends StatelessWidget {
 
               Obx(() {
                 final File? video = issueController.recordedVideo.value;
-                final isRecording = issueController.isRecordingVideo.value;
-                final cameraController = issueController.cameraController.value;
 
-                // Show camera preview while recording
-                if (isRecording && cameraController != null) {
-                  return Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: cameraController.value.aspectRatio,
-                          child: CameraPreview(cameraController),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.stop, color: Colors.white),
-                        label: const Text("Stop Recording"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        onPressed: issueController.stopVideoRecording,
-                      ),
-                    ],
+                if (video == null) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.videocam),
+                      label: const Text("Record Video"),
+                      onPressed: () async {
+                        final allowed = await permissionController.requestCamera();
+                        if (!allowed) return;
+
+                        await issueController.captureVideo();
+                      },
+                    ),
                   );
                 }
 
-                // Show video preview if recorded
-                if (video != null) {
-                  return VideoPreviewWidget(
-                    videoFile: video,
-                    onRemove: issueController.removeVideo,
-                  );
-                }
-
-                // Show record button
-                return SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.videocam),
-                    label: const Text("Record Video"),
-                    onPressed: () async {
-                      final allowed =
-                      await permissionController.requestCamera();
-                      if (!allowed) return;
-
-                      await issueController.startVideoRecording();
-                    },
-                  ),
+                return VideoPreviewWidget(
+                  videoFile: video,
+                  onRemove: issueController.removeVideo,
                 );
               }),
 
@@ -200,8 +169,7 @@ class ReportIssuePage extends StatelessWidget {
                         : "Add Voice Description",
                   ),
                   onPressed: () async {
-                    final allowed =
-                    await permissionController.requestMic();
+                    final allowed = await permissionController.requestMic();
                     if (!allowed) return;
 
                     if (isRecording) {
@@ -249,8 +217,7 @@ class ReportIssuePage extends StatelessWidget {
                   )
                       .toList(),
                   onChanged: (value) {
-                    issueController.selectedCategoryId.value =
-                        value ?? '';
+                    issueController.selectedCategoryId.value = value ?? '';
                   },
                 );
               }),

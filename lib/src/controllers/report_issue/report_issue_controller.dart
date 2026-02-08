@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:camera/camera.dart';
 
 import '../../services/media_upload_service.dart';
 
@@ -22,7 +22,6 @@ class ReportIssueController extends GetxController {
   final Rx<File?> recordedVideo = Rx<File?>(null);
 
   final RxBool isRecordingAudio = false.obs;
-  final RxBool isRecordingVideo = false.obs;
   final RxBool isSubmitting = false.obs;
 
   final RxString descriptionText = ''.obs;
@@ -31,14 +30,13 @@ class ReportIssueController extends GetxController {
   /// 📍 Location
   final Rx<Map<String, dynamic>?> issueLocation = Rx<Map<String, dynamic>?>(null);
 
-  // Video recording
-  CameraController? _cameraController;
-  final Rx<CameraController?> cameraController = Rx<CameraController?>(null);
+  /* ================= IMAGE (Using Native Camera) ================= */
 
-  /* ================= IMAGE ================= */
-
-  Future<void> pickFromCamera() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+  Future<void> capturePhoto() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.rear,
+    );
 
     if (image == null) return;
 
@@ -54,76 +52,29 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  /* ================= VIDEO ================= */
+  /* ================= VIDEO (Using Native Camera) ================= */
 
-  Future<void> startVideoRecording() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        Get.snackbar("Error", "No camera found");
-        return;
-      }
+  Future<void> captureVideo() async {
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.rear,
+      maxDuration: const Duration(minutes: 2), // Optional: limit video length
+    );
 
-      _cameraController = CameraController(
-        cameras.first,
-        ResolutionPreset.high,
-        enableAudio: true,
-      );
+    if (video == null) return;
 
-      await _cameraController!.initialize();
-      cameraController.value = _cameraController;
+    recordedVideo.value = File(video.path);
+    await _captureLocation(source: "video_camera");
 
-      await _cameraController!.startVideoRecording();
-      isRecordingVideo.value = true;
-
-      Get.snackbar(
-        "Recording",
-        "Video recording started",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } catch (e) {
-      print("❌ Video recording start error: $e");
-      Get.snackbar("Error", "Failed to start video recording: $e");
-    }
-  }
-
-  Future<void> stopVideoRecording() async {
-    if (_cameraController == null || !_cameraController!.value.isRecordingVideo) {
-      return;
-    }
-
-    try {
-      final XFile videoFile = await _cameraController!.stopVideoRecording();
-      isRecordingVideo.value = false;
-
-      recordedVideo.value = File(videoFile.path);
-      await _captureLocation(source: "video_recorded");
-
-      // Dispose camera
-      await _cameraController?.dispose();
-      _cameraController = null;
-      cameraController.value = null;
-
-      Get.snackbar(
-        "Success",
-        "Video recorded successfully",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } catch (e) {
-      print("❌ Video recording stop error: $e");
-      Get.snackbar("Error", "Failed to stop recording: $e");
-      isRecordingVideo.value = false;
-    }
+    Get.snackbar(
+      "Video Captured",
+      "Video recorded successfully",
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void removeVideo() {
     recordedVideo.value = null;
-    if (_cameraController != null) {
-      _cameraController?.dispose();
-      _cameraController = null;
-      cameraController.value = null;
-    }
-    isRecordingVideo.value = false;
     // Don't clear location if image exists
     if (selectedImage.value == null) {
       issueLocation.value = null;
@@ -302,7 +253,6 @@ class ReportIssueController extends GetxController {
 
   @override
   void onClose() {
-    _cameraController?.dispose();
     _recorder.dispose();
     super.onClose();
   }
