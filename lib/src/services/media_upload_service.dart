@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class MediaUploadService {
-  static const String _baseUrl = "http://192.168.0.165:3000";
-  // use your local IP if testing on real device
+  static const String _baseUrl = "http://10.10.48.224:3000";
 
   static Future<Map<String, String?>> upload({
     File? image,
