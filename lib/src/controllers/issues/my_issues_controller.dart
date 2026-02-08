@@ -13,35 +13,35 @@ class MyIssuesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchMyIssues();
+    _listenToMyIssues(); // Changed to stream listener
   }
 
-  Future<void> fetchMyIssues() async {
+  void _listenToMyIssues() {
     try {
-      isLoading.value = true;
-
       final user = _auth.currentUser;
       if (user == null || user.email == null) {
         throw Exception("User not logged in");
       }
 
-      final snapshot = await _firestore
+      _firestore
           .collection('issues')
           .where('reporterEmail', isEqualTo: user.email)
           .orderBy('createdAt', descending: true)
-          .get();
-
-      myIssues.assignAll(snapshot.docs);
+          .snapshots()
+          .listen((snapshot) {
+        myIssues.assignAll(snapshot.docs);
+        isLoading.value = false;
+      }, onError: (e) {
+        print("MY ISSUES FETCH ERROR: $e");
+        Get.snackbar(
+          "Error",
+          "Failed to load your issues",
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        isLoading.value = false;
+      });
     } catch (e) {
-      // VERY IMPORTANT: print real error
-      print("MY ISSUES FETCH ERROR: $e");
-
-      Get.snackbar(
-        "Error",
-        "Failed to load your issues",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
+      print("MY ISSUES SETUP ERROR: $e");
       isLoading.value = false;
     }
   }

@@ -1,18 +1,16 @@
-
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:camera/camera.dart';
 
 import '../../services/media_upload_service.dart';
 
 class ReportIssueController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
   final AudioRecorder _recorder = AudioRecorder();
 
@@ -20,22 +18,26 @@ class ReportIssueController extends GetxController {
 
   final Rx<File?> selectedImage = Rx<File?>(null);
   final Rx<File?> recordedAudio = Rx<File?>(null);
+  final Rx<File?> recordedVideo = Rx<File?>(null);
 
-  final RxBool isRecording = false.obs;
+  final RxBool isRecordingAudio = false.obs;
+  final RxBool isRecordingVideo = false.obs;
   final RxBool isSubmitting = false.obs;
 
   final RxString descriptionText = ''.obs;
   final RxString selectedCategoryId = ''.obs;
 
   /// 📍 Location
-  final Rx<Map<String, dynamic>?> issueLocation =
-  Rx<Map<String, dynamic>?>(null);
+  final Rx<Map<String, dynamic>?> issueLocation = Rx<Map<String, dynamic>?>(null);
+
+  // Video recording
+  CameraController? _cameraController;
+  final Rx<CameraController?> cameraController = Rx<CameraController?>(null);
 
   /* ================= IMAGE ================= */
 
   Future<void> pickFromCamera() async {
-    final XFile? image =
-    await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image == null) return;
 
@@ -44,8 +46,7 @@ class ReportIssueController extends GetxController {
   }
 
   Future<void> pickFromGallery() async {
-    final XFile? image =
-    await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) return;
 
@@ -55,7 +56,101 @@ class ReportIssueController extends GetxController {
 
   void removeImage() {
     selectedImage.value = null;
-    issueLocation.value = null;
+    // Don't clear location if video exists
+    if (recordedVideo.value == null) {
+      issueLocation.value = null;
+    }
+  }
+
+  /* ================= VIDEO ================= */
+
+  Future<void> pickVideoFromGallery() async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+
+    if (video == null) return;
+
+    recordedVideo.value = File(video.path);
+    await _captureLocation(source: "video_gallery");
+
+    Get.snackbar(
+      "Video Selected",
+      "Video attached successfully",
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> startVideoRecording() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        Get.snackbar("Error", "No camera found");
+        return;
+      }
+
+      _cameraController = CameraController(
+        cameras.first,
+        ResolutionPreset.high,
+        enableAudio: true,
+      );
+
+      await _cameraController!.initialize();
+      cameraController.value = _cameraController;
+
+      await _cameraController!.startVideoRecording();
+      isRecordingVideo.value = true;
+
+      Get.snackbar(
+        "Recording",
+        "Video recording started",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      print("❌ Video recording start error: $e");
+      Get.snackbar("Error", "Failed to start video recording: $e");
+    }
+  }
+
+  Future<void> stopVideoRecording() async {
+    if (_cameraController == null || !_cameraController!.value.isRecordingVideo) {
+      return;
+    }
+
+    try {
+      final XFile videoFile = await _cameraController!.stopVideoRecording();
+      isRecordingVideo.value = false;
+
+      recordedVideo.value = File(videoFile.path);
+      await _captureLocation(source: "video_recorded");
+
+      // Dispose camera
+      await _cameraController?.dispose();
+      _cameraController = null;
+      cameraController.value = null;
+
+      Get.snackbar(
+        "Success",
+        "Video recorded successfully",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      print("❌ Video recording stop error: $e");
+      Get.snackbar("Error", "Failed to stop recording: $e");
+      isRecordingVideo.value = false;
+    }
+  }
+
+  void removeVideo() {
+    recordedVideo.value = null;
+    if (_cameraController != null) {
+      _cameraController?.dispose();
+      _cameraController = null;
+      cameraController.value = null;
+    }
+    isRecordingVideo.value = false;
+    // Don't clear location if image exists
+    if (selectedImage.value == null) {
+      issueLocation.value = null;
+    }
   }
 
   /* ================= LOCATION ================= */
@@ -82,6 +177,7 @@ class ReportIssueController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      print("❌ Location error: $e");
       Get.snackbar(
         "Location Error",
         "Unable to fetch location",
@@ -99,20 +195,19 @@ class ReportIssueController extends GetxController {
     }
 
     final dir = await getTemporaryDirectory();
-    final path =
-        '${dir.path}/issue_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final path = '${dir.path}/issue_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
     await _recorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc),
       path: path,
     );
 
-    isRecording.value = true;
+    isRecordingAudio.value = true;
   }
 
   Future<void> stopRecording() async {
     final path = await _recorder.stop();
-    isRecording.value = false;
+    isRecordingAudio.value = false;
 
     if (path != null) {
       recordedAudio.value = File(path);
@@ -123,13 +218,13 @@ class ReportIssueController extends GetxController {
   /* ================= VALIDATION ================= */
 
   bool _validate() {
-    if (selectedImage.value == null) {
-      Get.snackbar("Validation Error", "Photo is required");
+    // Either image OR video is required
+    if (selectedImage.value == null && recordedVideo.value == null) {
+      Get.snackbar("Validation Error", "Photo or video is required");
       return false;
     }
 
-    if (descriptionText.value.trim().isEmpty &&
-        recordedAudio.value == null) {
+    if (descriptionText.value.trim().isEmpty && recordedAudio.value == null) {
       Get.snackbar(
         "Validation Error",
         "Add description via text or voice",
@@ -152,85 +247,6 @@ class ReportIssueController extends GetxController {
 
   /* ================= SUBMIT ================= */
 
-  // Future<void> submitIssue() async {
-  //   if (!_validate()) return;
-  //
-  //   try {
-  //     isSubmitting.value = true;
-  //
-  //     final media = await MediaUploadService.upload(
-  //       image: selectedImage.value,
-  //       audio: recordedAudio.value,
-  //     );
-  //
-  //     final user = _auth.currentUser;
-  //
-  //     await _firestore.collection('issues').add({
-  //       "imageUrl": media['imageUrl'],
-  //       "audioUrl": media['audioUrl'],
-  //       "description": descriptionText.value.trim(),
-  //       "categoryId": selectedCategoryId.value,
-  //       "status": "reported",
-  //       "createdAt": FieldValue.serverTimestamp(),
-  //       "reporterEmail": user?.email,
-  //       "location": issueLocation.value,
-  //     });
-  //
-  //     Get.back();
-  //     Get.snackbar("Success", "Issue reported successfully");
-  //   } catch (e) {
-  //     Get.snackbar("Error", "Failed to report issue");
-  //   } finally {
-  //     isSubmitting.value = false;
-  //   }
-  // }
-
-
-  // Future<void> submitIssue({
-  //   required String reporterEmail,
-  // }) async {
-  //   if (!_validate()) return;
-  //   isSubmitting.value = true;
-  //   try {
-  //     final mediaUrls = await MediaUploadService.upload(
-  //       image: selectedImage.value,
-  //       audio: recordedAudio.value,
-  //     );
-  //
-  //     final department = selectedCategoryId.value;
-  //
-  //     await _firestore.collection('issues').add({
-  //       // MEDIA
-  //       "imageUrl": mediaUrls['imageUrl'],
-  //       "audioUrl": mediaUrls['audioUrl'],
-  //
-  //       // CONTENT
-  //       "description": descriptionText.value.trim(),
-  //       "categoryId": selectedCategoryId.value,
-  //
-  //       // ROUTING
-  //       "departmentId": department,
-  //       "assignedToDept": department,
-  //
-  //       // META
-  //       "status": "reported",
-  //       "createdAt": FieldValue.serverTimestamp(),
-  //       "reporterEmail": reporterEmail,
-  //
-  //       // LOCATION (🔥 RESTORED)
-  //       "location": issueLocation.value,
-  //     });
-  //
-  //     Get.back();
-  //     Get.snackbar("Success", "Issue reported successfully");
-  //   } catch (e) {
-  //     Get.snackbar("Error", e.toString());
-  //   } finally {
-  //     isSubmitting.value = false;
-  //   }
-  // }
-
-
   Future<void> submitIssue({
     required String reporterEmail,
   }) async {
@@ -239,25 +255,39 @@ class ReportIssueController extends GetxController {
     isSubmitting.value = true;
 
     try {
+      print("🔄 Starting upload...");
+      print("📷 Image: ${selectedImage.value?.path}");
+      print("🎙️ Audio: ${recordedAudio.value?.path}");
+      print("🎥 Video: ${recordedVideo.value?.path}");
+
       final mediaUrls = await MediaUploadService.upload(
         image: selectedImage.value,
         audio: recordedAudio.value,
+        video: recordedVideo.value,
       );
 
+      print("✅ Upload successful!");
+      print("🖼️ Image URL: ${mediaUrls['imageUrl']}");
+      print("🎙️ Audio URL: ${mediaUrls['audioUrl']}");
+      print("🎥 Video URL: ${mediaUrls['videoUrl']}");
+
       final department = selectedCategoryId.value;
+
+      print("🔄 Writing to Firestore...");
 
       await _firestore.collection('issues').add({
         /* ================= MEDIA ================= */
         "imageUrl": mediaUrls['imageUrl'],
         "audioUrl": mediaUrls['audioUrl'],
+        "videoUrl": mediaUrls['videoUrl'],
 
         /* ================= CONTENT ================= */
         "description": descriptionText.value.trim(),
         "categoryId": selectedCategoryId.value,
 
         /* ================= ROUTING ================= */
-        "departmentId": department,        // original department
-        "assignedToDept": department,       // current owner
+        "departmentId": department,
+        "assignedToDept": department,
 
         /* ================= META ================= */
         "status": "reported",
@@ -267,19 +297,36 @@ class ReportIssueController extends GetxController {
         /* ================= LOCATION ================= */
         "location": issueLocation.value,
 
-        /* ================= REASSIGNMENT META (NEW) ================= */
+        /* ================= REASSIGNMENT META ================= */
         "lastReassignedAt": null,
         "lastReassignedBy": null,
       });
 
+      print("✅ Firestore write successful!");
+
+      // Clear all fields after successful submission
+      selectedImage.value = null;
+      recordedAudio.value = null;
+      recordedVideo.value = null;
+      descriptionText.value = '';
+      selectedCategoryId.value = '';
+      issueLocation.value = null;
+
       Get.back();
       Get.snackbar("Success", "Issue reported successfully");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      print("❌ ERROR: $e");
+      print("❌ ERROR TYPE: ${e.runtimeType}");
+      Get.snackbar("Error", "Failed to report issue: $e");
     } finally {
       isSubmitting.value = false;
     }
   }
 
-
+  @override
+  void onClose() {
+    _cameraController?.dispose();
+    _recorder.dispose();
+    super.onClose();
+  }
 }
