@@ -60,14 +60,40 @@ class MyReportedIssuesPage extends StatelessWidget {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
+                    // ✅ FIX: Constrain image size properly
                     leading: issue['imageUrl'] != null
                         ? ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
-                        issue['imageUrl'],
+                      child: SizedBox(
                         width: 50,
                         height: 50,
-                        fit: BoxFit.cover,
+                        child: Image.network(
+                          issue['imageUrl'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     )
                         : const Icon(Icons.report),

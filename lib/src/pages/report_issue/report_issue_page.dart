@@ -1,5 +1,3 @@
-
-
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -49,10 +47,11 @@ class ReportIssuePage extends StatelessWidget {
                       icon: const Icon(Icons.camera_alt),
                       label: const Text("Take Photo"),
                       onPressed: () async {
-                        final allowed = await permissionController.requestCamera();
+                        final allowed =
+                        await permissionController.requestCamera();
                         if (!allowed) return;
 
-                        await issueController.capturePhoto();
+                        await issueController.pickFromCamera();
                       },
                     ),
                   );
@@ -75,7 +74,8 @@ class ReportIssuePage extends StatelessWidget {
                       child: CircleAvatar(
                         backgroundColor: Colors.black54,
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
+                          icon:
+                          const Icon(Icons.close, color: Colors.white),
                           onPressed: issueController.removeImage,
                         ),
                       ),
@@ -95,7 +95,7 @@ class ReportIssuePage extends StatelessWidget {
               const SizedBox(height: 8),
 
               Obx(() {
-                final File? video = issueController.recordedVideo.value;
+                final File? video = issueController.selectedVideo.value;
 
                 if (video == null) {
                   return SizedBox(
@@ -104,10 +104,11 @@ class ReportIssuePage extends StatelessWidget {
                       icon: const Icon(Icons.videocam),
                       label: const Text("Record Video"),
                       onPressed: () async {
-                        final allowed = await permissionController.requestCamera();
+                        final allowed =
+                        await permissionController.requestCamera();
                         if (!allowed) return;
 
-                        await issueController.captureVideo();
+                        await issueController.pickVideoFromCamera();
                       },
                     ),
                   );
@@ -145,8 +146,10 @@ class ReportIssuePage extends StatelessWidget {
               const SizedBox(height: 12),
 
               Obx(() {
-                final isRecording = issueController.isRecordingAudio.value;
-                final hasAudio = issueController.recordedAudio.value != null;
+                final bool isRecording =
+                    issueController.isRecording.value;
+                final bool hasAudio =
+                    issueController.recordedAudio.value != null;
 
                 return OutlinedButton.icon(
                   icon: Icon(
@@ -169,7 +172,8 @@ class ReportIssuePage extends StatelessWidget {
                         : "Add Voice Description",
                   ),
                   onPressed: () async {
-                    final allowed = await permissionController.requestMic();
+                    final allowed =
+                    await permissionController.requestMic();
                     if (!allowed) return;
 
                     if (isRecording) {
@@ -217,7 +221,8 @@ class ReportIssuePage extends StatelessWidget {
                   )
                       .toList(),
                   onChanged: (value) {
-                    issueController.selectedCategoryId.value = value ?? '';
+                    issueController.selectedCategoryId.value =
+                        value ?? '';
                   },
                 );
               }),
@@ -244,7 +249,8 @@ class ReportIssuePage extends StatelessWidget {
                     onPressed: issueController.isSubmitting.value
                         ? null
                         : () async {
-                      final user = FirebaseAuth.instance.currentUser;
+                      final user =
+                          FirebaseAuth.instance.currentUser;
 
                       if (user == null || user.email == null) {
                         Get.snackbar(
@@ -264,7 +270,6 @@ class ReportIssuePage extends StatelessWidget {
                   ),
                 );
               }),
-
             ],
           ),
         ),
@@ -286,7 +291,8 @@ class VideoPreviewWidget extends StatefulWidget {
   });
 
   @override
-  State<VideoPreviewWidget> createState() => _VideoPreviewWidgetState();
+  State<VideoPreviewWidget> createState() =>
+      _VideoPreviewWidgetState();
 }
 
 class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
@@ -300,11 +306,10 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
   }
 
   Future<void> _initializeVideo() async {
-    _videoController = VideoPlayerController.file(widget.videoFile);
+    _videoController =
+        VideoPlayerController.file(widget.videoFile);
     await _videoController.initialize();
-    setState(() {
-      _isInitialized = true;
-    });
+    setState(() => _isInitialized = true);
   }
 
   @override
@@ -334,7 +339,8 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
           child: CircleAvatar(
             backgroundColor: Colors.black54,
             child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon:
+              const Icon(Icons.close, color: Colors.white),
               onPressed: widget.onRemove,
             ),
           ),
@@ -353,11 +359,9 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
               ),
               onPressed: () {
                 setState(() {
-                  if (_videoController.value.isPlaying) {
-                    _videoController.pause();
-                  } else {
-                    _videoController.play();
-                  }
+                  _videoController.value.isPlaying
+                      ? _videoController.pause()
+                      : _videoController.play();
                 });
               },
             ),
