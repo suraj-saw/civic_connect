@@ -1,11 +1,9 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../controllers/report_issue/issue_permission_controller.dart';
 import '../../controllers/report_issue/report_issue_controller.dart';
 import '../../controllers/report_issue/issue_category_controller.dart';
 
@@ -14,7 +12,6 @@ class ReportIssuePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final permissionController = Get.find<IssuePermissionController>();
     final issueController = Get.find<ReportIssueController>();
     final categoryController = Get.find<IssueCategoryController>();
 
@@ -38,21 +35,15 @@ class ReportIssuePage extends StatelessWidget {
               const SizedBox(height: 8),
 
               Obx(() {
-                final File? image = issueController.selectedImage.value;
+                final path = issueController.selectedImagePath.value;
 
-                if (image == null) {
+                if (path == null) {
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.camera_alt),
                       label: const Text("Take Photo"),
-                      onPressed: () async {
-                        final allowed =
-                        await permissionController.requestCamera();
-                        if (!allowed) return;
-
-                        await issueController.pickFromCamera();
-                      },
+                      onPressed: issueController.pickImage,
                     ),
                   );
                 }
@@ -62,7 +53,7 @@ class ReportIssuePage extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.file(
-                        image,
+                        File(path),
                         height: 200,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -76,7 +67,8 @@ class ReportIssuePage extends StatelessWidget {
                         child: IconButton(
                           icon:
                           const Icon(Icons.close, color: Colors.white),
-                          onPressed: issueController.removeImage,
+                          onPressed: () =>
+                          issueController.selectedImagePath.value = null,
                         ),
                       ),
                     ),
@@ -95,28 +87,23 @@ class ReportIssuePage extends StatelessWidget {
               const SizedBox(height: 8),
 
               Obx(() {
-                final File? video = issueController.selectedVideo.value;
+                final path = issueController.selectedVideoPath.value;
 
-                if (video == null) {
+                if (path == null) {
                   return SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.videocam),
                       label: const Text("Record Video"),
-                      onPressed: () async {
-                        final allowed =
-                        await permissionController.requestCamera();
-                        if (!allowed) return;
-
-                        await issueController.pickVideoFromCamera();
-                      },
+                      onPressed: issueController.pickVideo,
                     ),
                   );
                 }
 
                 return VideoPreviewWidget(
-                  videoFile: video,
-                  onRemove: issueController.removeVideo,
+                  videoFile: File(path),
+                  onRemove: () =>
+                  issueController.selectedVideoPath.value = null,
                 );
               }),
 
@@ -132,9 +119,8 @@ class ReportIssuePage extends StatelessWidget {
 
               TextField(
                 maxLines: 4,
-                onChanged: (value) {
-                  issueController.descriptionText.value = value;
-                },
+                onChanged: (value) =>
+                issueController.description.value = value,
                 decoration: InputDecoration(
                   hintText: "Describe the issue...",
                   border: OutlineInputBorder(
@@ -145,11 +131,12 @@ class ReportIssuePage extends StatelessWidget {
 
               const SizedBox(height: 12),
 
+              /* ===================== AUDIO ===================== */
+
               Obx(() {
-                final bool isRecording =
-                    issueController.isRecording.value;
-                final bool hasAudio =
-                    issueController.recordedAudio.value != null;
+                final isRecording = issueController.isRecording.value;
+                final hasAudio =
+                    issueController.recordedAudioPath.value != null;
 
                 return OutlinedButton.icon(
                   icon: Icon(
@@ -172,10 +159,6 @@ class ReportIssuePage extends StatelessWidget {
                         : "Add Voice Description",
                   ),
                   onPressed: () async {
-                    final allowed =
-                    await permissionController.requestMic();
-                    if (!allowed) return;
-
                     if (isRecording) {
                       await issueController.stopRecording();
                     } else {
@@ -212,6 +195,7 @@ class ReportIssuePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  value: issueController.selectedCategory.value,
                   items: categoryController.categories
                       .map(
                         (category) => DropdownMenuItem<String>(
@@ -220,10 +204,8 @@ class ReportIssuePage extends StatelessWidget {
                     ),
                   )
                       .toList(),
-                  onChanged: (value) {
-                    issueController.selectedCategoryId.value =
-                        value ?? '';
-                  },
+                  onChanged: (value) =>
+                  issueController.selectedCategory.value = value,
                 );
               }),
 
@@ -248,24 +230,10 @@ class ReportIssuePage extends StatelessWidget {
                     label: const Text("Report Issue"),
                     onPressed: issueController.isSubmitting.value
                         ? null
-                        : () async {
-                      final user =
-                          FirebaseAuth.instance.currentUser;
-
-                      if (user == null || user.email == null) {
-                        Get.snackbar(
-                          "Error",
-                          "User not logged in",
-                        );
-                        return;
-                      }
-
-                      await issueController.submitIssue(
-                        reporterEmail: user.email!,
-                      );
-                    },
+                        : issueController.submitIssue,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
                 );
@@ -278,7 +246,7 @@ class ReportIssuePage extends StatelessWidget {
   }
 }
 
-/* ===================== VIDEO PREVIEW WIDGET ===================== */
+/* ===================== VIDEO PREVIEW ===================== */
 
 class VideoPreviewWidget extends StatefulWidget {
   final File videoFile;
@@ -296,41 +264,53 @@ class VideoPreviewWidget extends StatefulWidget {
 }
 
 class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
-  late VideoPlayerController _videoController;
-  bool _isInitialized = false;
+  late VideoPlayerController _controller;
 
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
-  }
-
-  Future<void> _initializeVideo() async {
-    _videoController =
-        VideoPlayerController.file(widget.videoFile);
-    await _videoController.initialize();
-    setState(() => _isInitialized = true);
+    _controller = VideoPlayerController.file(widget.videoFile)
+      ..initialize().then((_) => setState(() {}));
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized) {
+    if (!_controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: AspectRatio(
-            aspectRatio: _videoController.value.aspectRatio,
-            child: VideoPlayer(_videoController),
+        AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: VideoPlayer(_controller),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: IconButton(
+              icon: Icon(
+                _controller.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _controller.value.isPlaying
+                      ? _controller.pause()
+                      : _controller.play();
+                });
+              },
+            ),
           ),
         ),
         Positioned(
@@ -342,28 +322,6 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
               icon:
               const Icon(Icons.close, color: Colors.white),
               onPressed: widget.onRemove,
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 8,
-          left: 8,
-          child: CircleAvatar(
-            backgroundColor: Colors.black54,
-            child: IconButton(
-              icon: Icon(
-                _videoController.value.isPlaying
-                    ? Icons.pause
-                    : Icons.play_arrow,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  _videoController.value.isPlaying
-                      ? _videoController.pause()
-                      : _videoController.play();
-                });
-              },
             ),
           ),
         ),
