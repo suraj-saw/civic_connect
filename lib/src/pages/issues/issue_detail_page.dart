@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import '../../services/firebase_storage_service.dart';
 import '../../services/media_upload_service.dart';
 import '../home/admin/reassignment_timeline.dart';
 
@@ -780,6 +781,51 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
     }
   }
 
+  // Future<void> _submitResolution() async {
+  //   if (_resolutionImage == null) {
+  //     Get.snackbar("Error", "Please add a resolution photo");
+  //     return;
+  //   }
+  //
+  //   setState(() {
+  //     _isSubmittingResolution = true;
+  //   });
+  //
+  //   try {
+  //     // Upload resolution image
+  //     final mediaUrls = await MediaUploadService.upload(
+  //       image: _resolutionImage,
+  //       audio: null,
+  //     );
+  //
+  //     final currentUser = FirebaseAuth.instance.currentUser;
+  //
+  //     // Update issue with resolution
+  //     await FirebaseFirestore.instance
+  //         .collection('issues')
+  //         .doc(widget.issueId)
+  //         .update({
+  //       'status': 'resolved',
+  //       'resolution': {
+  //         'imageUrl': mediaUrls['imageUrl'],
+  //         'notes': _resolutionNotesController.text.trim(),
+  //         'resolvedAt': FieldValue.serverTimestamp(),
+  //         'resolvedBy': currentUser?.uid,
+  //       },
+  //       'resolvedAt': FieldValue.serverTimestamp(),
+  //     });
+  //
+  //     Get.snackbar("Success", "Issue marked as resolved");
+  //     Navigator.pop(context);
+  //   } catch (e) {
+  //     Get.snackbar("Error", "Failed to submit resolution: ${e.toString()}");
+  //   } finally {
+  //     setState(() {
+  //       _isSubmittingResolution = false;
+  //     });
+  //   }
+  // }
+
   Future<void> _submitResolution() async {
     if (_resolutionImage == null) {
       Get.snackbar("Error", "Please add a resolution photo");
@@ -791,10 +837,10 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
     });
 
     try {
-      // Upload resolution image
-      final mediaUrls = await MediaUploadService.upload(
-        image: _resolutionImage,
-        audio: null,
+      // Upload resolution image to Firebase Storage
+      final resolutionImageUrl = await FirebaseStorageService.uploadResolutionImage(
+        issueId: widget.issueId,
+        image: _resolutionImage!,
       );
 
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -806,7 +852,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
           .update({
         'status': 'resolved',
         'resolution': {
-          'imageUrl': mediaUrls['imageUrl'],
+          'imageUrl': resolutionImageUrl,
           'notes': _resolutionNotesController.text.trim(),
           'resolvedAt': FieldValue.serverTimestamp(),
           'resolvedBy': currentUser?.uid,

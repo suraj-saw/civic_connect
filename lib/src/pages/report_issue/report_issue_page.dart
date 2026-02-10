@@ -211,31 +211,47 @@ class ReportIssuePage extends StatelessWidget {
 
               const SizedBox(height: 36),
 
-              /* ===================== SUBMIT ===================== */
+/* ===================== SUBMIT ===================== */
 
               Obx(() {
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: issueController.isSubmitting.value
-                        ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+                final isSubmitting = issueController.isSubmitting.value;
+                final progress = issueController.uploadProgress.value;
+
+                return Column(
+                  children: [
+                    // Progress indicator (shown when uploading)
+                    if (isSubmitting && progress > 0 && progress < 1) ...[
+                      LinearProgressIndicator(value: progress),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Uploading... ${(progress * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
-                    )
-                        : const Icon(Icons.report),
-                    label: const Text("Report Issue"),
-                    onPressed: issueController.isSubmitting.value
-                        ? null
-                        : issueController.submitIssue,
-                    style: ElevatedButton.styleFrom(
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Submit button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: isSubmitting
+                            ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Icon(Icons.report),
+                        label: Text(isSubmitting ? "Submitting..." : "Report Issue"),
+                        onPressed: isSubmitting ? null : issueController.submitIssue,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 );
               }),
             ],
