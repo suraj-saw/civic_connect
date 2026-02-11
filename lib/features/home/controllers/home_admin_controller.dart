@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../data/repositories/auth_reporsitory.dart';
 
 class HomeAdminController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthRepository _authRepository = AuthRepository();
 
   final RxString adminDept = ''.obs;
   final RxString adminEmail = ''.obs;
@@ -45,10 +48,13 @@ class HomeAdminController extends GetxController {
 
   Future<void> signOut() async {
     try {
-      await _auth.signOut();
-      Get.offAllNamed('/login');
+      await _authRepository.signOut();
+
+      if (Get.currentRoute != AppRoutes.signIn) {
+        Get.offAllNamed(AppRoutes.signIn);
+      }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to sign out');
+      Get.snackbar('Error', 'Failed to sign out: $e');
     }
   }
 }
