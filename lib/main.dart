@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
       darkTheme: TAppTheme.dark(seedColor: Colors.blue),
       home: const RootPage(),
       getPages: AppPages.pages,
+      initialRoute: '/',
     );
   }
 }

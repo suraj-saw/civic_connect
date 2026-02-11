@@ -1,4 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
+import '../../features/auth/controllers/sign_in_controller.dart';
+import '../../features/home/controllers/home_citizen_controller.dart';
+import '../../features/issues/controllers/my_issues_controller.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -22,9 +26,30 @@ class FirebaseAuthService {
     );
   }
 
-  // Sign out
+  // Sign out with proper cleanup
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+    try {
+      // Cancel all Firestore listeners and delete controllers BEFORE logout
+      if (Get.isRegistered<MyIssuesController>()) {
+        Get.delete<MyIssuesController>(force: true);
+      }
+
+      if (Get.isRegistered<HomeCitizenController>()) {
+        final homeController = Get.find<HomeCitizenController>();
+        homeController.resetToDashboard();
+        Get.delete<HomeCitizenController>(force: true);
+      }
+
+      if (Get.isRegistered<SignInController>()) {
+        Get.find<SignInController>().clearFields();
+      }
+
+      // Now logout from Firebase
+      await _firebaseAuth.signOut();
+    } catch (e) {
+      print('Error signing out: $e');
+      rethrow;
+    }
   }
 
   // Stream of auth state changes

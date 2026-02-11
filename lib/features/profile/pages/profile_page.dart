@@ -1,51 +1,100 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../auth/controllers/sign_in_controller.dart';
 import '../../home/controllers/home_citizen_controller.dart';
+import '../../issues/controllers/my_issues_controller.dart';
+import '../../../core/routes/app_routes.dart';
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
+  const ProfilePage({super.key});
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Future<void> _handleLogout() async {
+    try {
+      // Cancel all Firestore listeners and delete controllers BEFORE logout
+      if (Get.isRegistered<MyIssuesController>()) {
+        Get.delete<MyIssuesController>(force: true);
+      }
+
+      if (Get.isRegistered<HomeCitizenController>()) {
+        final homeController = Get.find<HomeCitizenController>();
+        homeController.resetToDashboard();
+        Get.delete<HomeCitizenController>(force: true);
+      }
+
+      if (Get.isRegistered<SignInController>()) {
+        Get.find<SignInController>().clearFields();
+      }
+
+      // Now logout from Firebase
+      await FirebaseAuth.instance.signOut();
+
+      // Navigate to sign in page
+      Get.offAllNamed(AppRoutes.signIn);
+    } catch (e) {
+      print("LOGOUT ERROR: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to logout. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
 
-    if (user == null) {
+    if (userId == null) {
       return const Scaffold(
-        body: Center(child: Text("User not logged in")),
+        body: Center(child: Text("Not logged in")),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Profile"),
+        title: const Text("Profile"),
+        centerTitle: true,
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: _firestore.collection('users').doc(user.uid).get(),
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(
-              child: Text("Failed to load profile"),
-            );
+          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Could not load profile"));
           }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final data = snapshot.data!.data()!;
 
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      (data['name'] ?? 'U')[0].toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
                 _profileTile("Name", data['name']),
                 _profileTile("Email", data['email']),
                 _profileTile("Phone", data['phone']),
@@ -69,17 +118,7 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: Colors.red,
                     ),
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-
-                      if (Get.isRegistered<HomeCitizenController>()) {
-                        Get.find<HomeCitizenController>().resetToDashboard();
-                      }
-
-                      if (Get.isRegistered<SignInController>()) {
-                        Get.find<SignInController>().clearFields();
-                      }
-                    },
+                    onPressed: _handleLogout,
                   ),
                 ),
               ],

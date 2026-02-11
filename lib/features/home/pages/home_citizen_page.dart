@@ -3,6 +3,7 @@ import 'package:civic_connect/features/home/pages/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../issues/controllers/issue_category_controller.dart';
 import '../controllers/home_citizen_controller.dart';
 
 import '../../profile/pages/profile_page.dart';
@@ -13,6 +14,7 @@ class HomeCitizenPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(HomeCitizenController());
+    final categoryController = Get.put(IssueCategoryController());
 
     final List<Widget> screens = [
       const DashboardPage(), // index 0
