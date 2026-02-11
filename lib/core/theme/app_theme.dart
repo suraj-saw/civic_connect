@@ -1,9 +1,11 @@
-import 'package:civic_connect/src/themes/appbar_theme.dart';
-import 'package:civic_connect/src/themes/elevated_button_theme.dart';
-import 'package:civic_connect/src/themes/text_button_theme.dart';
-import 'package:civic_connect/src/themes/text_form_field_theme.dart';
-import 'package:civic_connect/src/themes/text_theme.dart';
+
+import 'package:civic_connect/core/theme/text_button_theme.dart';
+import 'package:civic_connect/core/theme/text_form_field_theme.dart';
+import 'package:civic_connect/core/theme/text_theme.dart';
 import 'package:flutter/material.dart';
+
+import 'appbar_theme.dart';
+import 'elevated_button_theme.dart';
 
 class TAppTheme {
   TAppTheme._();

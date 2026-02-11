@@ -53,6 +53,9 @@ dependencies:
   url_launcher: ^6.3.2
   audioplayers: ^6.5.1
   firebase_storage: ^13.0.6
+  cached_network_image: ^3.4.1
+  file_picker: ^10.3.10
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

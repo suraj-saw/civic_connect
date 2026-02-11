@@ -1,10 +1,11 @@
-import 'package:civic_connect/src/pages/root/root_page.dart';
-import 'package:civic_connect/src/routes/app_pages.dart';
-import 'package:civic_connect/src/themes/app_theme.dart';
+
+import 'package:civic_connect/features/root/pages/root_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'core/routes/app_pages.dart';
+import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 
 void main() async {
