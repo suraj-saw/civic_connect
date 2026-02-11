@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../auth/controllers/sign_in_controller.dart';
 import '../../home/controllers/home_admin_controller.dart';
 import '../../home/controllers/home_citizen_controller.dart';
 import '../../issues/controllers/issue_category_controller.dart';
@@ -20,52 +19,39 @@ class RootPage extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
-
-        // 🔄 Waiting for Firebase auth
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // ❌ Not logged in → show SignInPage
+        // Not logged in -> show SignInPage
         if (!authSnapshot.hasData || authSnapshot.data == null) {
           _cleanupControllers();
-          return  SignInPage();
+          return SignInPage();
         }
 
-        // ✅ Logged in → Fetch user role
         final uid = authSnapshot.data!.uid;
 
         return FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .get(),
+          future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
           builder: (context, userSnapshot) {
-
             if (userSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
               );
             }
 
-            // 🔥 If permission denied or error → force logout cleanly
-            if (userSnapshot.hasError) {
+            // If permission denied or invalid user doc -> logout cleanly
+            if (userSnapshot.hasError ||
+                !userSnapshot.hasData ||
+                !userSnapshot.data!.exists) {
               FirebaseAuth.instance.signOut();
               _cleanupControllers();
               return SignInPage();
             }
 
-            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-              FirebaseAuth.instance.signOut();
-              _cleanupControllers();
-              return SignInPage();
-            }
-
-            final userData =
-            userSnapshot.data!.data() as Map<String, dynamic>?;
-
+            final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
             if (userData == null) {
               FirebaseAuth.instance.signOut();
               _cleanupControllers();
@@ -74,19 +60,20 @@ class RootPage extends StatelessWidget {
 
             final role = userData['role'] as String?;
 
-            // 👇 IMPORTANT: Controllers are registered inside pages now
             if (role == 'admin') {
               return const HomeAdminPage();
-            } else {
-              return const HomeCitizenPage();
             }
+
+            return const HomeCitizenPage();
           },
         );
       },
     );
   }
 
-  /// 🧹 Clean up all auth-dependent controllers
+  /// Clean up auth-dependent controllers.
+  /// NOTE: SignInController is intentionally NOT deleted here to avoid
+  /// disposing TextEditingControllers while SignInPage is rebuilding.
   void _cleanupControllers() {
     if (Get.isRegistered<HomeAdminController>()) {
       Get.delete<HomeAdminController>(force: true);
@@ -102,10 +89,6 @@ class RootPage extends StatelessWidget {
 
     if (Get.isRegistered<IssueCategoryController>()) {
       Get.delete<IssueCategoryController>(force: true);
-    }
-
-    if (Get.isRegistered<SignInController>()) {
-      Get.delete<SignInController>(force: true);
     }
   }
 }

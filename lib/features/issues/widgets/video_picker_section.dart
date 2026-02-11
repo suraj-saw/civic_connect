@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as path;
+
 import '../controllers/report_issue_controller.dart';
 import 'media_item_card.dart';
 
@@ -22,20 +24,22 @@ class VideoPickerSection extends GetView<ReportIssueController> {
             ),
             const SizedBox(height: 12),
             Obx(() {
-              if (controller.selectedVideo.value == null) {
+              final selectedVideo = controller.selectedVideo.value;
+
+              if (selectedVideo == null) {
                 return SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.videocam_outlined),
-                    label: const Text('Pick Video'),
-                    onPressed: controller.pickVideo,
+                    label: const Text('Capture Video'),
+                    onPressed: controller.captureVideo,
                   ),
                 );
               }
 
               return MediaItemCard(
                 label: 'Video Selected',
-                fileName: 'video.mp4',
+                fileName: path.basename(selectedVideo.path),
                 onRemove: controller.removeVideo,
               );
             }),

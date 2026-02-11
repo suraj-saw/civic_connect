@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controllers/report_issue_controller.dart';
 
 class DescriptionField extends GetView<ReportIssueController> {
@@ -11,14 +12,17 @@ class DescriptionField extends GetView<ReportIssueController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Description',
+          'Description *',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
         TextField(
-          onChanged: (value) => controller.description.value = value,
+          onChanged: (value) {
+            controller.description.value = value;
+            controller.isFormDirty.value = true;
+          },
           maxLength: 500,
           minLines: 4,
           maxLines: 6,

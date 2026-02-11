@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import 'audio_picker_section.dart';
 import 'image_picker_section.dart';
 import 'video_picker_section.dart';
-import 'audio_picker_section.dart';
 
 class MediaPickerSection extends StatelessWidget {
   const MediaPickerSection({Key? key}) : super(key: key);
@@ -27,7 +28,7 @@ class MediaPickerSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
-        'Add Media (Optional)',
+        'Media Attachments',
         style: Theme.of(Get.context!).textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as path;
+
 import '../controllers/report_issue_controller.dart';
 import 'media_item_card.dart';
 
@@ -15,37 +17,48 @@ class AudioPickerSection extends GetView<ReportIssueController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Audio (Optional)',
+              'Voice Description (Optional)',
               style: Get.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 12),
             Obx(() {
-              if (controller.selectedAudio.value == null) {
-                return SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.mic_outlined),
-                    label: const Text('Record Audio'),
-                    onPressed: _showAudioOptions,
-                  ),
+              final audio = controller.selectedAudio.value;
+
+              if (audio != null) {
+                return MediaItemCard(
+                  label: 'Audio Recorded',
+                  fileName: path.basename(audio.path),
+                  onRemove: controller.removeAudio,
                 );
               }
 
-              return MediaItemCard(
-                label: 'Audio Selected',
-                fileName: 'audio.mp3',
-                onRemove: controller.removeAudio,
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(
+                    controller.isRecording.value
+                        ? Icons.stop_circle_outlined
+                        : Icons.mic_none_outlined,
+                  ),
+                  label: Text(
+                    controller.isRecording.value
+                        ? 'Stop Recording'
+                        : 'Record Voice Note',
+                  ),
+                  onPressed: controller.toggleAudioRecording,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: controller.isRecording.value
+                        ? Colors.red.shade400
+                        : null,
+                  ),
+                ),
               );
             }),
           ],
         ),
       ),
     );
-  }
-
-  void _showAudioOptions() {
-    Get.snackbar('Info', 'Audio recording feature coming soon');
   }
 }

@@ -12,7 +12,10 @@ class SignInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SignInController());
+    final controller = Get.isRegistered<SignInController>()
+        ? Get.find<SignInController>()
+        : Get.put(SignInController());
+
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -24,23 +27,22 @@ class SignInPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text("Welcome Back", style: textTheme.displaySmall),
+                Text('Welcome Back', style: textTheme.displaySmall),
                 const SizedBox(height: 8),
-                Text("Sign in to your account",
-                    style: textTheme.bodyMedium),
+                Text('Sign in to your account', style: textTheme.bodyMedium),
                 const SizedBox(height: 40),
 
                 // Email
                 TextFormField(
                   controller: controller.emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: "Email"),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) {
                     if (v == null || v.isEmpty) {
-                      return "Email is required";
+                      return 'Email is required';
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                      return "Enter a valid email";
+                      return 'Enter a valid email';
                     }
                     return null;
                   },
@@ -52,11 +54,11 @@ class SignInPage extends StatelessWidget {
                   controller: controller.passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: "Password",
+                    labelText: 'Password',
                     suffixIcon: Icon(Icons.visibility),
                   ),
                   validator: (v) =>
-                  v == null || v.isEmpty ? "Password is required" : null,
+                  v == null || v.isEmpty ? 'Password is required' : null,
                 ),
                 const SizedBox(height: 30),
 
@@ -74,9 +76,8 @@ class SignInPage extends StatelessWidget {
                         }
                       },
                       child: controller.isLoading.value
-                          ? const CircularProgressIndicator(
-                          color: Colors.white)
-                          : const Text("Sign In"),
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Sign In'),
                     ),
                   ),
                 ),
