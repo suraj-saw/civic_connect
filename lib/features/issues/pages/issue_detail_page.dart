@@ -6,7 +6,6 @@ import 'dart:io';
 
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../src/pages/home/admin/reassignment_timeline.dart';
 import '../widgets/issue_status_chip.dart';
 import '../widgets/issue_info_section.dart';
 import '../widgets/media_player/audio_player_widget.dart';
@@ -36,7 +35,8 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () => _navigateToTimeline(),
+            onPressed: () => {},
+                // _navigateToTimeline(),
             tooltip: "View History",
           ),
         ],
@@ -250,14 +250,14 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
 
   /* ================= ACTIONS ================= */
 
-  void _navigateToTimeline() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ReassignmentTimeline(issueId: widget.issueId),
-      ),
-    );
-  }
+  // void _navigateToTimeline() {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => ReassignmentTimeline(issueId: widget.issueId),
+  //     ),
+  //   );
+  // }
 
   Future<void> _updateStatus(String newStatus) async {
     try {
