@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CivicConnect',
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       theme: TAppTheme.light(seedColor: Colors.blue),
       darkTheme: TAppTheme.dark(seedColor: Colors.blue),
       home: const RootPage(),
