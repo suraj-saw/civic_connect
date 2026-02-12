@@ -1,6 +1,3 @@
-
-
-
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+
+import '../../../core/routes/app_routes.dart';
+import '../../home/controllers/home_citizen_controller.dart';
+import '../../home/pages/home_citizen_page.dart';
 
 class ReportIssueController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -46,8 +47,7 @@ class ReportIssueController extends GetxController {
 
   /// Opens camera — can be called multiple times to add more photos
   Future<void> pickImage() async {
-    final XFile? image =
-    await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image == null) return;
 
     selectedImage.value = File(image.path);
@@ -84,8 +84,7 @@ class ReportIssueController extends GetxController {
   /* ================= VIDEO (camera only) ================= */
 
   Future<void> pickVideo() async {
-    final XFile? video =
-    await _picker.pickVideo(source: ImageSource.camera);
+    final XFile? video = await _picker.pickVideo(source: ImageSource.camera);
     if (video == null) return;
 
     selectedVideo.value = File(video.path);
@@ -172,6 +171,9 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
+  // Backward-compatible alias used by older widgets/calls.
+  void clearAudio() => removeAudio();
+
   /* ================= LOCATION ================= */
 
   // Public alias for widgets that call captureCurrentLocation directly
@@ -187,8 +189,7 @@ class ReportIssueController extends GetxController {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('Location Disabled',
-            'Please enable location services',
+        Get.snackbar('Location Disabled', 'Please enable location services',
             snackPosition: SnackPosition.BOTTOM);
         return;
       }
@@ -308,12 +309,11 @@ class ReportIssueController extends GetxController {
         duration: const Duration(seconds: 2),
       );
 
-      // Reset state BEFORE Get.back() — prevents setState-after-dispose
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
       clearForm();
 
-      Get.back(result: true);
+      _navigateCitizenToDashboard();
     } catch (e) {
       print('❌ Submit error: $e');
       Get.snackbar('Error', 'Failed to submit issue: $e',
@@ -322,6 +322,25 @@ class ReportIssueController extends GetxController {
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
     }
+  }
+
+  void _navigateCitizenToDashboard() {
+    if (Get.isRegistered<HomeCitizenController>()) {
+      Get.find<HomeCitizenController>().resetToDashboard();
+    }
+
+    // Always force the app back to citizen home after successful submission.
+    // This avoids stack-dependent behavior where Get.back() may not pop the
+    // expected route in some navigation contexts.
+    Get.offAllNamed(AppRoutes.homeCitizen);
+
+    // Safety fallback: if named navigation is not resolved in current stack,
+    // push HomeCitizenPage directly.
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (Get.currentRoute != AppRoutes.homeCitizen) {
+        Get.offAll(() => const HomeCitizenPage());
+      }
+    });
   }
 
   /* ================= CLEAR FORM ================= */
