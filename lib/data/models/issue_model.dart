@@ -43,12 +43,22 @@ class IssueModel {
   final String? imageUrl;
   final String? videoUrl;
   final String? audioUrl;
-  final Map<String, double>? location;
+  // Mixed-type map: latitude/longitude/accuracy are doubles, capturedAt is String.
+  final Map<String, dynamic>? location;
   final String reporterEmail;
   final String assignedToDept;
   final String status;
   final DateTime createdAt;
   final List<TimelineEntry> timeline;
+
+  /// Total number of citizens who have reported this physical issue.
+  /// Starts at 1 (the original reporter). Incremented by 1 for every
+  /// citizen who later marks the same spot as a duplicate.
+  final int duplicateReportCount;
+
+  /// E-mail addresses of citizens who flagged this issue as a duplicate
+  /// AFTER the original report. The original reporter is NOT included here.
+  final List<String> duplicateReporters;
 
   IssueModel({
     this.id,
@@ -63,7 +73,10 @@ class IssueModel {
     this.status = 'reported',
     required this.createdAt,
     List<TimelineEntry>? timeline,
-  }) : timeline = timeline ?? [];
+    this.duplicateReportCount = 1,
+    List<String>? duplicateReporters,
+  })  : timeline = timeline ?? [],
+        duplicateReporters = duplicateReporters ?? [];
 
   factory IssueModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -83,13 +96,17 @@ class IssueModel {
       videoUrl: data['videoUrl'],
       audioUrl: data['audioUrl'],
       location: data['location'] != null
-          ? Map<String, double>.from(data['location'])
+          ? Map<String, dynamic>.from(data['location'])
           : null,
       reporterEmail: data['reporterEmail'] ?? '',
       assignedToDept: data['assignedToDept'] ?? '',
       status: data['status'] ?? 'reported',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       timeline: timelineList,
+      duplicateReportCount: (data['duplicateReportCount'] as int?) ?? 1,
+      duplicateReporters: data['duplicateReporters'] != null
+          ? List<String>.from(data['duplicateReporters'])
+          : [],
     );
   }
 
