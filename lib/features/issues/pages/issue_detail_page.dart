@@ -14,6 +14,7 @@ import '../widgets/resolution/resolution_card.dart';
 import '../widgets/resolution/resolution_form.dart';
 import '../widgets/status/status_action_card.dart';
 import '../widgets/status/rejection_dialog.dart';
+import 'reassignment_timeline_page.dart';
 
 class IssueDetailPage extends StatefulWidget {
   final String issueId;
@@ -35,8 +36,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () => {},
-                // _navigateToTimeline(),
+            onPressed: _navigateToTimeline,
             tooltip: "View History",
           ),
         ],
@@ -250,14 +250,9 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
 
   /* ================= ACTIONS ================= */
 
-  // void _navigateToTimeline() {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => ReassignmentTimeline(issueId: widget.issueId),
-  //     ),
-  //   );
-  // }
+  void _navigateToTimeline() {
+    Get.to(() => ReassignmentTimelinePage(issueId: widget.issueId));
+  }
 
   Future<void> _updateStatus(String newStatus) async {
     try {
