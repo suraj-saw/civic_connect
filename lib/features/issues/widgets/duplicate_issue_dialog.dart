@@ -45,8 +45,6 @@ class DuplicateIssueDialog extends StatelessWidget {
         ? '${issue.description.substring(0, 120)}…'
         : issue.description;
 
-    final reportCount = issue.duplicateReportCount;
-
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -179,34 +177,47 @@ class DuplicateIssueDialog extends StatelessWidget {
               const SizedBox(height: 10),
 
               // ── Reporter count ─────────────────────────────────────────────
-              Row(
-                children: [
-                  const Icon(Icons.people_outline,
-                      size: 15, color: AppColors.primary),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      reportCount == 1
-                          ? '1 citizen has reported this issue'
-                          : '$reportCount citizens have reported this issue',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
+              // duplicateReporters holds only the citizens who flagged the issue
+              // AFTER the original report. duplicateReportCount = 1 + that length.
+              Builder(builder: (context) {
+                // duplicateReportCount starts at 1 (the original reporter).
+                // Every citizen who clicks "I've Seen This Too" increments it.
+                // So when the dialog appears it already reflects all known reporters.
+                final total = issue.duplicateReportCount;
+                final countText = total == 1
+                    ? '1 citizen has reported this issue.'
+                    : '$total citizens have reported this issue in total.';
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.people_outline,
+                        size: 15, color: AppColors.primary),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        countText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              }),
               const SizedBox(height: 4),
             ],
           ),
         ),
       ),
       actions: [
-        // ── Cancel — stay on the form ──────────────────────────────────────
+        // ── Cancel — clear the form and stay on the report screen ──────────
         TextButton(
-          onPressed: Get.back,
+          onPressed: () {
+            controller.clearForm();
+            Get.back();
+          },
           child: const Text('Cancel'),
         ),
 

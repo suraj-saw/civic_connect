@@ -17,11 +17,23 @@ class ImagePickerSection extends GetView<ReportIssueController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Photos',
-                  style: Get.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'Photos',
+                      style: Get.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Text(
+                      ' *',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
                 Obx(() => Text(
                   '${controller.selectedImages.length}/5',
@@ -30,6 +42,11 @@ class ImagePickerSection extends GetView<ReportIssueController> {
                   ),
                 )),
               ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'At least one photo is required',
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
             ),
             const SizedBox(height: 12),
             Obx(() {

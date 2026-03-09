@@ -19,6 +19,7 @@ class DescriptionField extends GetView<ReportIssueController> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller.descriptionTextController,
           onChanged: (value) {
             controller.description.value = value;
             controller.isFormDirty.value = true;

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -27,6 +28,10 @@ class ReportIssueController extends GetxController {
   final AudioRecorder _recorder = AudioRecorder();
 
   /* ================= STATE ================= */
+
+  /// Drives the description TextField so clearForm() can programmatically
+  /// wipe the text — a plain TextField with no controller ignores value resets.
+  final descriptionTextController = TextEditingController();
 
   final selectedImages = RxList<XFile>();
   final selectedImagePath = Rxn<String>();
@@ -235,6 +240,14 @@ class ReportIssueController extends GetxController {
     if (selectedCategoryId.value == null) {
       Get.snackbar('Validation Error', 'Please select a category',
           snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+    if (selectedImages.isEmpty) {
+      Get.snackbar(
+        'Photo Required',
+        'Please attach at least one photo of the issue',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return false;
     }
     return true;
@@ -486,6 +499,7 @@ class ReportIssueController extends GetxController {
     recordedAudioPath.value = null;
     recordedAudio.value = null;
     description.value = '';
+    descriptionTextController.clear();
     selectedCategoryId.value = null;
     issueLocation.value = null;
     isFormDirty.value = false;
@@ -497,6 +511,7 @@ class ReportIssueController extends GetxController {
   void onClose() {
     if (isRecording.value) _recorder.stop();
     _recorder.dispose();
+    descriptionTextController.dispose();
     super.onClose();
   }
 }
