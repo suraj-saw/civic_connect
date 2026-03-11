@@ -1,94 +1,43 @@
-// import 'package:civic_connect/features/home/pages/dashboard_page.dart';
-// import 'package:civic_connect/features/home/pages/map_page.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import '../../issues/controllers/issue_category_controller.dart';
-// import '../controllers/home_citizen_controller.dart';
-//
-// import '../../profile/pages/profile_page.dart';
-//
-// class HomeCitizenPage extends StatelessWidget {
-//   const HomeCitizenPage({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final controller = Get.put(HomeCitizenController());
-//     final categoryController = Get.put(IssueCategoryController());
-//
-//     final List<Widget> screens = [
-//       const DashboardPage(), // index 0
-//       const MapPage(),       // index 1
-//       ProfilePage(),         // index 2
-//     ];
-//
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Civic Connect"),
-//         centerTitle: true,
-//       ),
-//       body: Obx(
-//             () => IndexedStack(
-//           index: controller.currentIndex.value,
-//           children: screens,
-//         ),
-//       ),
-//       bottomNavigationBar: Obx(
-//             () => BottomNavigationBar(
-//           currentIndex: controller.currentIndex.value,
-//           onTap: controller.changeTabIndex,
-//           selectedItemColor: Colors.blueAccent,
-//           items: const [
-//             BottomNavigationBarItem(
-//               icon: Icon(Icons.dashboard),
-//               label: 'Dashboard',
-//             ),
-//             BottomNavigationBarItem(
-//               icon: Icon(Icons.map),
-//               label: 'Map',
-//             ),
-//             BottomNavigationBarItem(
-//               icon: Icon(Icons.person),
-//               label: 'Profile',
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-import 'package:civic_connect/features/home/pages/dashboard_page.dart';
-import 'package:civic_connect/features/home/pages/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../notifications/pages/notification_page.dart';
 import '../controllers/home_citizen_controller.dart';
+import '../../notifications/controllers/notification_controller.dart';
 import '../../profile/pages/profile_page.dart';
+import 'dashboard_page.dart';
+import 'map_page.dart';
 
 class HomeCitizenPage extends StatelessWidget {
   const HomeCitizenPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Use Get.find so HomeBinding's lazyPut owns the controller lifecycle.
-    // If not yet registered (e.g. direct navigation without binding),
-    // fall back to put so the page never crashes.
     final controller = Get.isRegistered<HomeCitizenController>()
         ? Get.find<HomeCitizenController>()
         : Get.put(HomeCitizenController());
 
-    final List<Widget> screens = [
-      const DashboardPage(), // index 0
-      const MapPage(),       // index 1
-      ProfilePage(),         // index 2
+    final notifController = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : Get.put(NotificationController());
+
+    final screens = [
+      const DashboardPage(),
+      const MapPage(),
+      ProfilePage(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Civic Connect"),
+        title: const Text('Civic Connect'),
         centerTitle: true,
+        actions: [
+          Obx(() => _NotificationBell(
+            unreadCount: notifController.unreadCount,
+            onTap: () => Get.to(() => const NotificationsPage()),
+          )),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Obx(
             () => IndexedStack(
@@ -103,19 +52,59 @@ class HomeCitizenPage extends StatelessWidget {
           selectedItemColor: Colors.blueAccent,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Dashboard',
-            ),
+                icon: Icon(Icons.dashboard), label: 'Dashboard'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'Map',
-            ),
+                icon: Icon(Icons.map), label: 'Map'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+                icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationBell extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _NotificationBell({
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Notifications',
+      onPressed: onTap,
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.notifications_outlined),
+          if (unreadCount > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  unreadCount > 99 ? '99+' : '$unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../../../core/constants/issue_constants.dart';
@@ -29,8 +33,6 @@ class ReportIssueController extends GetxController {
 
   /* ================= STATE ================= */
 
-  /// Drives the description TextField so clearForm() can programmatically
-  /// wipe the text — a plain TextField with no controller ignores value resets.
   final descriptionTextController = TextEditingController();
 
   final selectedImages = RxList<XFile>();
@@ -53,13 +55,26 @@ class ReportIssueController extends GetxController {
   final isFormDirty = false.obs;
   final submitSuccess = false.obs;
 
-  /// Location — fetched only ONCE, never null-checked again after first capture.
-  final Rx<Map<String, dynamic>?> issueLocation =
-      Rx<Map<String, dynamic>?>(null);
+  final Rx<Map<String, dynamic>?> issueLocation = Rx<Map<String, dynamic>?>(null);
 
-  /* ================= IMAGE (camera only, multi-shot) ================= */
+  /* ================= LIFECYCLE ================= */
 
-  /// Opens camera — can be called multiple times to add more photos.
+  @override
+  void onInit() {
+    super.onInit();
+    // Attempt silent location fetch on page open if permission already granted.
+    _fetchLocationIfPermitted();
+  }
+
+  Future<void> _fetchLocationIfPermitted() async {
+    final status = await Permission.locationWhenInUse.status;
+    if (status.isGranted && issueLocation.value == null) {
+      await _fetchLocation();
+    }
+  }
+
+  /* ================= IMAGE ================= */
+
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image == null) return;
@@ -69,7 +84,7 @@ class ReportIssueController extends GetxController {
     selectedImages.add(image);
     isFormDirty.value = true;
 
-    await _captureLocationOnce();
+    if (issueLocation.value == null) await _fetchLocationIfPermitted();
   }
 
   Future<void> captureImage() => pickImage();
@@ -93,7 +108,7 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  /* ================= VIDEO (camera only) ================= */
+  /* ================= VIDEO ================= */
 
   Future<void> pickVideo() async {
     final XFile? video = await _picker.pickVideo(source: ImageSource.camera);
@@ -103,7 +118,7 @@ class ReportIssueController extends GetxController {
     selectedVideoPath.value = video.path;
     isFormDirty.value = true;
 
-    await _captureLocationOnce();
+    if (issueLocation.value == null) await _fetchLocationIfPermitted();
   }
 
   Future<void> captureVideo() => pickVideo();
@@ -151,7 +166,7 @@ class ReportIssueController extends GetxController {
         Get.snackbar('Voice Recorded', 'Voice description added successfully',
             snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (e) {
+    } catch (_) {
       isRecording.value = false;
     }
   }
@@ -183,55 +198,81 @@ class ReportIssueController extends GetxController {
 
   /* ================= LOCATION ================= */
 
-  Future<void> captureCurrentLocation() => _captureLocationOnce();
-
-  Future<void> _captureLocationOnce() async {
-    if (issueLocation.value != null) return;
-    await _fetchLocation();
-  }
-
+  /// Silently fetches GPS — no dialog, no blocking.
   Future<void> _fetchLocation() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        Get.snackbar('Location Disabled', 'Please enable location services',
-            snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-      if (permission == LocationPermission.deniedForever) return;
-
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.best,
         ),
       );
-
       issueLocation.value = {
         'latitude': position.latitude,
         'longitude': position.longitude,
         'accuracy': position.accuracy,
         'capturedAt': DateTime.now().toIso8601String(),
       };
-
-      Get.snackbar(
-        'Location Captured',
-        'Location attached (±${position.accuracy.toStringAsFixed(1)} m)',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } catch (_) {
-      // Location is optional — silent failure keeps form usable.
+      debugPrint('[Location] Captured: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      debugPrint('[Location] Silent fetch failed: $e');
     }
+  }
+
+  /// Shows a dialog asking citizen to enable location.
+  /// Waits for them to return from settings, then re-fetches.
+  /// Returns true if location was successfully obtained.
+  Future<bool> _promptAndFetchLocation() async {
+    final completer = Completer<bool>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.location_off_rounded, color: Colors.orange),
+            SizedBox(width: 10),
+            Text('Location Required'),
+          ],
+        ),
+        content: const Text(
+          'Your location is needed to submit an issue. '
+              'Please enable location permission for Civic Connect and come back.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+              completer.complete(false);
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              // Open system location settings / app settings.
+              await openAppSettings();
+              // After returning from settings, re-check and fetch.
+              final status = await Permission.locationWhenInUse.status;
+              if (status.isGranted) {
+                await _fetchLocation();
+                completer.complete(issueLocation.value != null);
+              } else {
+                completer.complete(false);
+              }
+            },
+            child: const Text('Enable Location'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+
+    return completer.future;
   }
 
   /* ================= VALIDATION ================= */
 
-  bool validateForm() {
+  bool _validateFieldsOnly() {
     if (description.value.trim().isEmpty) {
       Get.snackbar('Validation Error', 'Please enter a description',
           snackPosition: SnackPosition.BOTTOM);
@@ -243,11 +284,9 @@ class ReportIssueController extends GetxController {
       return false;
     }
     if (selectedImages.isEmpty) {
-      Get.snackbar(
-        'Photo Required',
-        'Please attach at least one photo of the issue',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Photo Required',
+          'Please attach at least one photo of the issue',
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
     return true;
@@ -255,16 +294,9 @@ class ReportIssueController extends GetxController {
 
   /* ================= DUPLICATE CHECK ================= */
 
-  /// Queries Firestore for recent issues in the same category and checks
-  /// whether any of them fall within the GPS-accuracy-derived match radius.
-  ///
-  /// Returns the nearest [DuplicateCheckResult] or `null` if this is a
-  /// genuinely new issue (or when location is unavailable / check fails).
   Future<DuplicateCheckResult?> _checkForDuplicate() async {
     final location = issueLocation.value;
     final categoryId = selectedCategoryId.value;
-
-    // Duplicate check requires both location and category.
     if (location == null || categoryId == null) return null;
 
     final lat = (location['latitude'] as num?)?.toDouble();
@@ -278,16 +310,12 @@ class ReportIssueController extends GetxController {
       final snapshot = await _firestoreService
           .getIssuesByCategoryForDuplicateCheck(categoryId);
 
-      // Exclude already-resolved / rejected issues only.
-      // We intentionally keep the current user's own previous reports in the
-      // candidate list — if they try to report the same issue again from the
-      // same location, they should see the duplicate warning.
       final candidates = snapshot.docs
           .map((doc) => IssueModel.fromFirestore(doc))
           .where((issue) =>
-              issue.id != null &&
-              issue.status != 'resolved' &&
-              issue.status != 'rejected')
+      issue.id != null &&
+          issue.status != 'resolved' &&
+          issue.status != 'rejected')
           .toList();
 
       return DuplicateIssueDetector.findNearestDuplicate(
@@ -297,29 +325,41 @@ class ReportIssueController extends GetxController {
         currentAccuracyMeters: accuracy,
       );
     } catch (e) {
-      // Duplicate check is best-effort. If anything fails, proceed normally.
-      debugPrint('[DuplicateCheck] Error during duplicate check: $e');
+      debugPrint('[DuplicateCheck] Error: $e');
       return null;
     }
   }
 
   /* ================= SUBMIT ================= */
 
-  /// Entry point for the "Submit Issue" button.
-  ///
-  /// Step 1 — run duplicate check.
-  /// Step 2a — if duplicate found: show [DuplicateIssueDialog] and return.
-  /// Step 2b — if no duplicate: proceed with [_doSubmit].
   Future<void> submitIssue() async {
-    if (!validateForm()) return;
+    // Step 1 — validate text fields and media first.
+    if (!_validateFieldsOnly()) return;
 
+    // Step 2 — ensure location is available, prompt if not.
+    if (issueLocation.value == null) {
+      isSubmitting.value = true;
+      // Try a silent fetch first (covers cases where GPS is on but not yet fetched).
+      final status = await Permission.locationWhenInUse.status;
+      if (status.isGranted) {
+        await _fetchLocation();
+      }
+      isSubmitting.value = false;
+
+      // Still no location — show the enable dialog and wait.
+      if (issueLocation.value == null) {
+        final obtained = await _promptAndFetchLocation();
+        if (!obtained) return; // Citizen cancelled or didn't enable.
+      }
+    }
+
+    // Step 3 — run duplicate check.
     isSubmitting.value = true;
     uploadProgress.value = 0.05;
 
     final duplicate = await _checkForDuplicate();
 
     if (duplicate != null) {
-      // Reset state so the form remains editable if the citizen cancels.
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
       Get.dialog(
@@ -332,9 +372,6 @@ class ReportIssueController extends GetxController {
     await _doSubmit();
   }
 
-  /// Called from [DuplicateIssueDialog] when the citizen chooses
-  /// "I've Seen This Too" — increments the counter on the existing issue
-  /// and navigates the citizen back to the dashboard.
   Future<void> markAsDuplicateAndGoBack({
     required String existingIssueId,
     required int currentCount,
@@ -365,17 +402,11 @@ class ReportIssueController extends GetxController {
       _navigateCitizenToDashboard();
     } catch (e) {
       isSubmitting.value = false;
-      Get.snackbar(
-        'Error',
-        'Could not record your report. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Error', 'Could not record your report. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  /// Performs the actual Firestore write and Storage uploads.
-  /// Separated from [submitIssue] so it can be called directly after the
-  /// citizen dismisses the duplicate dialog via "Report Separately".
   Future<void> _doSubmit() async {
     isSubmitting.value = true;
     uploadProgress.value = 0.1;
@@ -385,9 +416,7 @@ class ReportIssueController extends GetxController {
       if (user == null) throw Exception('User not logged in');
 
       uploadProgress.value = 0.3;
-
       final issueRef = _firestore.collection('issues').doc();
-
       uploadProgress.value = 0.6;
 
       final imageFiles = selectedImages.map((x) => File(x.path)).toList();
@@ -428,7 +457,6 @@ class ReportIssueController extends GetxController {
         'rejectionReason': null,
         'rejectedAt': null,
         'rejectedBy': null,
-        // Duplicate tracking — starts at 1 (the original reporter counts as 1).
         'duplicateReportCount': 1,
         'duplicateReporters': [],
         'timeline': [
@@ -445,17 +473,13 @@ class ReportIssueController extends GetxController {
       uploadProgress.value = 1.0;
       submitSuccess.value = true;
 
-      Get.snackbar(
-        'Success',
-        'Issue reported successfully',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
+      Get.snackbar('Success', 'Issue reported successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2));
 
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
       clearForm();
-
       _navigateCitizenToDashboard();
     } on FirebaseException catch (e) {
       final message = e.code == 'permission-denied'

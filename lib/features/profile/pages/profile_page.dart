@@ -6,40 +6,34 @@ import '../../auth/controllers/sign_in_controller.dart';
 import '../../home/controllers/home_citizen_controller.dart';
 import '../../issues/controllers/my_issues_controller.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   Future<void> _handleLogout() async {
     try {
-      // Cancel all Firestore listeners and delete controllers BEFORE logout
       if (Get.isRegistered<MyIssuesController>()) {
         Get.delete<MyIssuesController>(force: true);
       }
-
+      if (Get.isRegistered<NotificationController>()) {
+        Get.delete<NotificationController>(force: true);
+      }
       if (Get.isRegistered<HomeCitizenController>()) {
-        final homeController = Get.find<HomeCitizenController>();
-        homeController.resetToDashboard();
+        Get.find<HomeCitizenController>().resetToDashboard();
         Get.delete<HomeCitizenController>(force: true);
       }
-
       if (Get.isRegistered<SignInController>()) {
         Get.find<SignInController>().clearFields();
       }
 
-      // Now logout from Firebase
       await FirebaseAuth.instance.signOut();
-
-      // Navigate to sign in page
       Get.offAllNamed(AppRoutes.signIn);
     } catch (e) {
-      print("LOGOUT ERROR: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to logout. Please try again.",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-      );
+      print('LOGOUT ERROR: $e');
+      Get.snackbar('Error', 'Failed to logout. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red);
     }
   }
 

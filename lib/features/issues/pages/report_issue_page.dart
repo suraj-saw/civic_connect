@@ -13,7 +13,6 @@ class ReportIssuePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reportController = Get.find<ReportIssueController>();
     Get.find<IssueCategoryController>();
     final permissionController = Get.find<IssuePermissionController>();
 
@@ -22,11 +21,6 @@ class ReportIssuePage extends StatelessWidget {
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
-      }
-
-      if (permissionController.hasLocationPermission &&
-          reportController.issueLocation.value == null) {
-        reportController.captureCurrentLocation();
       }
 
       return Scaffold(
@@ -39,9 +33,6 @@ class ReportIssuePage extends StatelessWidget {
               children: [
                 _buildHeader(context),
                 const SizedBox(height: 16),
-                if (!permissionController.hasLocationPermission)
-                  _buildLocationPermissionBanner(permissionController),
-                const SizedBox(height: 10),
                 const ReportIssueForm(),
                 const SizedBox(height: 24),
                 const MediaPickerSection(),
@@ -73,33 +64,6 @@ class ReportIssuePage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildLocationPermissionBanner(
-      IssuePermissionController permissionController,
-      ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Location permission is not enabled. Please enable it for better issue tracking.',
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: permissionController.ensureLocationPermissionOnLoad,
-            child: const Text('Enable Location Permission'),
-          ),
-        ],
-      ),
     );
   }
 }
