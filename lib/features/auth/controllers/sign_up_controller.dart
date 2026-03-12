@@ -11,6 +11,7 @@ class SignUpController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final otpController = TextEditingController();
+  final isPasswordVisible = false.obs;
 
   final isLoading = false.obs;
 
@@ -126,6 +127,7 @@ class SignUpController extends GetxController {
 
   /// 🧹 Clear fields
   void clearFields() {
+    isPasswordVisible.value = false;
     nameController.clear();
     phoneController.clear();
     emailController.clear();

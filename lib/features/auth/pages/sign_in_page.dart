@@ -38,9 +38,7 @@ class SignInPage extends StatelessWidget {
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Email is required';
-                    }
+                    if (v == null || v.isEmpty) return 'Email is required';
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
                       return 'Enter a valid email';
                     }
@@ -50,41 +48,45 @@ class SignInPage extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // Password
-                TextFormField(
+                Obx(() => TextFormField(
                   controller: controller.passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !controller.isPasswordVisible.value,
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    suffixIcon: Icon(Icons.visibility),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordVisible.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () => controller.isPasswordVisible.toggle(),
+                    ),
                   ),
                   validator: (v) =>
                   v == null || v.isEmpty ? 'Password is required' : null,
-                ),
+                )),
                 const SizedBox(height: 30),
 
                 // Sign In Button
-                Obx(
-                      () => SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: controller.isLoading.value
-                          ? null
-                          : () {
-                        if (_formKey.currentState!.validate()) {
-                          controller.signIn();
-                        }
-                      },
-                      child: controller.isLoading.value
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Sign In'),
-                    ),
+                Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : () {
+                      if (_formKey.currentState!.validate()) {
+                        controller.signIn();
+                      }
+                    },
+                    child: controller.isLoading.value
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Sign In'),
                   ),
-                ),
+                )),
 
                 const SizedBox(height: 60),
 
-                // Sign Up Link
                 RichText(
                   text: TextSpan(
                     style: textTheme.bodyMedium,

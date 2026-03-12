@@ -8,75 +8,96 @@ class MyIssuesController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final RxBool isLoading = true.obs;
+
+  // Issues the user originally reported
   final RxList<QueryDocumentSnapshot<Map<String, dynamic>>> myIssues =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _issuesSubscription;
+  // Issues the user marked as duplicate (reported by someone else)
+  final RxList<QueryDocumentSnapshot<Map<String, dynamic>>> duplicateIssues =
+      <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _ownSubscription;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _duplicateSubscription;
   StreamSubscription<User?>? _authSubscription;
 
   @override
   void onInit() {
     super.onInit();
     _listenToAuthChanges();
-    _listenToMyIssues();
+    _startListeners();
   }
 
-  /// Listen for logout and cancel Firestore stream immediately
   void _listenToAuthChanges() {
     _authSubscription = _auth.authStateChanges().listen((user) {
-      if (user == null) {
-        _issuesSubscription?.cancel();
-      }
+      if (user == null) _cancelStreams();
     });
   }
 
-  void _listenToMyIssues() {
-    final user = _auth.currentUser;
-
-    if (user == null || user.email == null) {
+  void _startListeners() {
+    final email = _auth.currentUser?.email;
+    if (email == null) {
       isLoading.value = false;
       return;
     }
 
-    _issuesSubscription?.cancel();
+    _cancelStreams();
+    isLoading.value = true;
 
-    _issuesSubscription = _firestore
+    // Track how many streams have resolved at least once
+    bool ownLoaded = false;
+    bool dupLoaded = false;
+
+    void checkBothLoaded() {
+      if (ownLoaded && dupLoaded) isLoading.value = false;
+    }
+
+    _ownSubscription = _firestore
         .collection('issues')
-        .where('reporterEmail', isEqualTo: user.email)
+        .where('reporterEmail', isEqualTo: email)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen(
           (snapshot) {
         myIssues.assignAll(snapshot.docs);
-        isLoading.value = false;
+        ownLoaded = true;
+        checkBothLoaded();
       },
-      onError: (e) {
-        // 🔥 Ignore permission denied during logout
-        if (e.toString().contains('permission-denied')) {
-          return;
-        }
+      onError: _handleError,
+    );
 
-        print("MY ISSUES FETCH ERROR: $e");
-
-        Get.snackbar(
-          "Error",
-          "Failed to load your issues",
-          snackPosition: SnackPosition.BOTTOM,
-        );
-
-        isLoading.value = false;
+    _duplicateSubscription = _firestore
+        .collection('issues')
+        .where('duplicateReporters', arrayContains: email)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+        duplicateIssues.assignAll(snapshot.docs);
+        dupLoaded = true;
+        checkBothLoaded();
       },
+      onError: _handleError,
     );
   }
 
-  void refresh() {
-    isLoading.value = true;
-    _listenToMyIssues();
+  void _handleError(dynamic e) {
+    if (e.toString().contains('permission-denied')) return;
+    Get.snackbar('Error', 'Failed to load your issues',
+        snackPosition: SnackPosition.BOTTOM);
+    isLoading.value = false;
   }
+
+  void _cancelStreams() {
+    _ownSubscription?.cancel();
+    _duplicateSubscription?.cancel();
+  }
+
+  void refresh() => _startListeners();
 
   @override
   void onClose() {
-    _issuesSubscription?.cancel();
+    _cancelStreams();
     _authSubscription?.cancel();
     super.onClose();
   }

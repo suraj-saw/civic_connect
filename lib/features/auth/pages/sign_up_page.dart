@@ -80,16 +80,24 @@ class SignUpPage extends StatelessWidget {
                 const SizedBox(height: 10),
 
                 // Password
-                TextFormField(
+                // Password
+                Obx(() => TextFormField(
                   controller: controller.passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !controller.isPasswordVisible.value,
+                  decoration: InputDecoration(
                     labelText: "Password",
-                    suffixIcon: Icon(Icons.visibility),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordVisible.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () => controller.isPasswordVisible.toggle(),
+                    ),
                   ),
                   validator: (v) =>
                   v == null || v.isEmpty ? "Enter required field" : null,
-                ),
+                )),
                 const SizedBox(height: 20),
 
                 // Sign Up
