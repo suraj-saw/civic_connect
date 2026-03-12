@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../issues/pages/issue_detail_admin_page.dart';
 import '../controllers/home_admin_controller.dart';
 import '../widgets/admin/admin_drawer.dart';
@@ -25,6 +26,9 @@ class HomeAdminPage extends StatelessWidget {
         appBar: AppBar(
           title: Text('Admin • ${controller.adminDept.value.toUpperCase()}'),
           centerTitle: true,
+          actions: [
+            const ThemeToggleButton(),
+          ],
         ),
         drawer: const AdminDrawer(),
         body: Obx(() {
