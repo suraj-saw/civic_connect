@@ -16,13 +16,17 @@ class HomeAdminController extends GetxController {
   final RxString adminEmail = ''.obs;
   final RxString adminName = ''.obs;
   final RxBool isLoading = true.obs;
-
   final RxBool isIssuesLoading = true.obs;
+
   final RxList<QueryDocumentSnapshot<Map<String, dynamic>>> assignedIssues =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _issuesSubscription;
   StreamSubscription<User?>? _authSubscription;
+
+  // Statuses that should NOT appear on the admin dashboard.
+  // 'reopened' is intentionally excluded — it must re-appear for the admin.
+  static const _hiddenStatuses = {'resolved', 'rejected'};
 
   @override
   void onInit() {
@@ -43,7 +47,6 @@ class HomeAdminController extends GetxController {
   Future<void> _loadAdminInfo() async {
     try {
       final user = _auth.currentUser;
-
       if (user == null) {
         isLoading.value = false;
         return;
@@ -51,14 +54,14 @@ class HomeAdminController extends GetxController {
 
       isLoading.value = true;
 
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final userDoc =
+      await _firestore.collection('users').doc(user.uid).get();
 
       if (userDoc.exists) {
         final data = userDoc.data()!;
         adminDept.value = data['departmentId'] ?? '';
         adminEmail.value = data['email'] ?? '';
         adminName.value = data['name'] ?? '';
-
         _listenToDepartmentIssues();
       }
     } catch (e) {
@@ -78,6 +81,10 @@ class HomeAdminController extends GetxController {
     isIssuesLoading.value = true;
     _issuesSubscription?.cancel();
 
+    // Firestore does not support "not in" with orderBy on a different field
+    // in a single query without a composite index, so we fetch all issues for
+    // the department and filter client-side. This is safe because each admin
+    // only sees their own department's issues.
     _issuesSubscription = _firestore
         .collection('issues')
         .where('assignedToDept', isEqualTo: adminDept.value)
@@ -85,11 +92,15 @@ class HomeAdminController extends GetxController {
         .snapshots()
         .listen(
           (snapshot) {
-        assignedIssues.assignAll(snapshot.docs);
+        final active = snapshot.docs
+            .where((doc) =>
+        !_hiddenStatuses.contains(doc.data()['status']?.toString()))
+            .toList();
+        assignedIssues.assignAll(active);
         isIssuesLoading.value = false;
       },
       onError: (e) {
-        // If no composite index exists yet, fallback query still loads issues.
+        // Fallback without orderBy if composite index is missing
         if (e.toString().contains('failed-precondition')) {
           _issuesSubscription?.cancel();
           _issuesSubscription = _firestore
@@ -98,12 +109,14 @@ class HomeAdminController extends GetxController {
               .snapshots()
               .listen(
                 (snapshot) {
-              assignedIssues.assignAll(snapshot.docs);
+              final active = snapshot.docs
+                  .where((doc) => !_hiddenStatuses
+                  .contains(doc.data()['status']?.toString()))
+                  .toList();
+              assignedIssues.assignAll(active);
               isIssuesLoading.value = false;
             },
-            onError: (_) {
-              isIssuesLoading.value = false;
-            },
+            onError: (_) => isIssuesLoading.value = false,
           );
           return;
         }
@@ -115,24 +128,17 @@ class HomeAdminController extends GetxController {
 
         print('Assigned issues fetch error: $e');
         isIssuesLoading.value = false;
-
-        Get.snackbar(
-          'Error',
-          'Failed to load department issues',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        Get.snackbar('Error', 'Failed to load department issues',
+            snackPosition: SnackPosition.BOTTOM);
       },
     );
   }
 
-  void refreshIssues() {
-    _listenToDepartmentIssues();
-  }
+  void refreshIssues() => _listenToDepartmentIssues();
 
   Future<void> signOut() async {
     try {
       await _authRepository.signOut();
-
       if (Get.currentRoute != AppRoutes.signIn) {
         Get.offAllNamed(AppRoutes.signIn);
       }

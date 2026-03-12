@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../../../../core/utils/date_formatter.dart';
+import 'package:flutter/material.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
-
   const AudioPlayerWidget({super.key, required this.audioUrl});
 
   @override
@@ -12,103 +10,141 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final _player = AudioPlayer();
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  PlayerState _state = PlayerState.stopped;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _state = s);
+    });
+    _player.onPositionChanged.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
+    _player.onDurationChanged.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    });
+  }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _player.dispose();
     super.dispose();
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  Future<void> _toggle() async {
+    if (_state == PlayerState.playing) {
+      await _player.pause();
+    } else {
+      await _player.play(UrlSource(widget.audioUrl));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            StreamBuilder<PlayerState>(
-              stream: _audioPlayer.onPlayerStateChanged,
-              builder: (context, snapshot) {
-                final isPlaying = snapshot.data == PlayerState.playing;
+    final scheme = Theme.of(context).colorScheme;
+    final isPlaying = _state == PlayerState.playing;
+    final progress = _duration.inMilliseconds > 0
+        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
 
-                return Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
-                      iconSize: 48,
-                      color: Theme.of(context).primaryColor,
-                      onPressed: () async {
-                        if (isPlaying) {
-                          await _audioPlayer.pause();
-                        } else {
-                          await _audioPlayer.play(UrlSource(widget.audioUrl));
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Voice Description",
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 4),
-                          StreamBuilder<Duration>(
-                            stream: _audioPlayer.onPositionChanged,
-                            builder: (context, snapshot) {
-                              final position = snapshot.data ?? Duration.zero;
-                              return Text(
-                                DateFormatter.formatDuration(position),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.stop),
-                      onPressed: () async {
-                        await _audioPlayer.stop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            _buildProgressBar(),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant.withOpacity(0.4)),
       ),
-    );
-  }
-
-  Widget _buildProgressBar() {
-    return StreamBuilder<Duration>(
-      stream: _audioPlayer.onPositionChanged,
-      builder: (context, posSnapshot) {
-        final position = posSnapshot.data ?? Duration.zero;
-
-        return StreamBuilder<Duration?>(
-          stream: _audioPlayer.onDurationChanged,
-          builder: (context, durSnapshot) {
-            final duration = durSnapshot.data ?? Duration.zero;
-
-            return LinearProgressIndicator(
-              value: duration.inMilliseconds > 0
-                  ? position.inMilliseconds / duration.inMilliseconds
-                  : 0,
-            );
-          },
-        );
-      },
+      child: Row(
+        children: [
+          // Play/Pause button
+          GestureDetector(
+            onTap: _toggle,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPlaying ? Icons.pause : Icons.play_arrow,
+                color: scheme.onPrimary,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Progress + labels
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Voice Description',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    overlayShape:
+                    const RoundSliderOverlayShape(overlayRadius: 12),
+                  ),
+                  child: Slider(
+                    value: progress,
+                    onChanged: (v) {
+                      final target = Duration(
+                        milliseconds:
+                        (v * _duration.inMilliseconds).toInt(),
+                      );
+                      _player.seek(target);
+                    },
+                    activeColor: scheme.primary,
+                    inactiveColor: scheme.outlineVariant,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_fmt(_position),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: scheme.onSurfaceVariant)),
+                      Text(_fmt(_duration),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: scheme.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Stop button — only when playing
+          if (isPlaying) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _player.stop(),
+              child: Icon(Icons.stop_rounded,
+                  size: 20, color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

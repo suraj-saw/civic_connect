@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'media_player/audio_player_widget.dart';
 import 'media_player/video_player_widget.dart';
+import 'media_player/fullscreen_image_page.dart';
 
 class AdminIssueHeaderSection extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -111,10 +112,7 @@ class AdminIssueLocationSection extends StatelessWidget {
 class AdminIssueMediaSection extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  const AdminIssueMediaSection({
-    super.key,
-    required this.data,
-  });
+  const AdminIssueMediaSection({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -125,16 +123,15 @@ class AdminIssueMediaSection extends StatelessWidget {
     final videoUrl = data['videoUrl'] as String?;
     final audioUrl = data['audioUrl'] as String?;
 
-    final effectiveImages = <String>[];
-    if (imageUrls.isNotEmpty) {
-      effectiveImages.addAll(imageUrls);
-    } else if (imageUrl != null && imageUrl.isNotEmpty) {
-      effectiveImages.add(imageUrl);
+    // Merge imageUrls + legacy single imageUrl
+    final images = <String>[...imageUrls];
+    if (images.isEmpty && imageUrl != null && imageUrl.isNotEmpty) {
+      images.add(imageUrl);
     }
 
-    final hasMedia =
-        effectiveImages.isNotEmpty || audioUrl != null || videoUrl != null;
-    if (!hasMedia) return const SizedBox.shrink();
+    if (images.isEmpty && audioUrl == null && videoUrl == null) {
+      return const SizedBox.shrink();
+    }
 
     return Card(
       margin: const EdgeInsets.all(16),
@@ -143,77 +140,161 @@ class AdminIssueMediaSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Evidence',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            if (effectiveImages.isNotEmpty) ...[
-              const Text(
-                'Photos',
-                style: TextStyle(fontWeight: FontWeight.w600),
+            const Text('Evidence',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+            // ── Photos ──────────────────────────────────────────────────
+            if (images.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.photo_library_outlined,
+                      size: 15, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Photos (${images.length})',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 220,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: effectiveImages.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final url = effectiveImages[index];
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: Image.network(
-                          url,
+              const SizedBox(height: 10),
+              // Hero wide thumbnail
+              GestureDetector(
+                onTap: () => _openGallery(context, images, 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          images[0],
                           fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return const SizedBox(
-                              width: 220,
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 220,
-                              color: Colors.grey[300],
-                              child: const Icon(
-                                Icons.broken_image,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
+                          loadingBuilder: (_, child, p) => p == null
+                              ? child
+                              : Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                  child: CircularProgressIndicator())),
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 40),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.zoom_out_map,
+                                    color: Colors.white, size: 13),
+                                const SizedBox(width: 4),
+                                Text(
+                                  images.length > 1
+                                      ? '1 / ${images.length}'
+                                      : 'View',
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              // Thumbnail strip when multiple photos
+              if (images.length > 1) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 72,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: images.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, i) => GestureDetector(
+                      onTap: () => _openGallery(context, images, i),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          images[i],
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 72,
+                            height: 72,
+                            color: Colors.grey[300],
+                            child:
+                            const Icon(Icons.broken_image, size: 24),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
+
+            // ── Audio ────────────────────────────────────────────────────
             if (audioUrl != null) ...[
-              const Text(
-                'Audio',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.mic_outlined,
+                      size: 15, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  const Text('Audio',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               AudioPlayerWidget(audioUrl: audioUrl),
-              const SizedBox(height: 12),
             ],
+
+            // ── Video ────────────────────────────────────────────────────
             if (videoUrl != null) ...[
-              const Text(
-                'Video',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.videocam_outlined,
+                      size: 15, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  const Text('Video',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               VideoPlayerWidget(videoUrl: videoUrl),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openGallery(
+      BuildContext context, List<String> urls, int startIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FullscreenImagePage(
+          imageUrls: urls,
+          initialIndex: startIndex,
         ),
       ),
     );
