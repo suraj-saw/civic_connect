@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../controllers/sign_in_controller.dart';
 import '../../../core/routes/app_routes.dart';
@@ -12,103 +14,174 @@ class SignInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<SignInController>()
+    final ctrl = Get.isRegistered<SignInController>()
         ? Get.find<SignInController>()
         : Get.put(SignInController());
 
-    final textTheme = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text('Welcome Back', style: textTheme.displaySmall),
-                const SizedBox(height: 8),
-                Text('Sign in to your account', style: textTheme.bodyMedium),
-                const SizedBox(height: 40),
-
-                // Email
-                TextFormField(
-                  controller: controller.emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email is required';
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Password
-                Obx(() => TextFormField(
-                  controller: controller.passwordController,
-                  obscureText: !controller.isPasswordVisible.value,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isPasswordVisible.value
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () => controller.isPasswordVisible.toggle(),
-                    ),
-                  ),
-                  validator: (v) =>
-                  v == null || v.isEmpty ? 'Password is required' : null,
-                )),
-                const SizedBox(height: 30),
-
-                // Sign In Button
-                Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () {
-                      if (_formKey.currentState!.validate()) {
-                        controller.signIn();
-                      }
-                    },
-                    child: controller.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Sign In'),
-                  ),
-                )),
-
-                const SizedBox(height: 60),
-
-                RichText(
-                  text: TextSpan(
-                    style: textTheme.bodyMedium,
-                    text: "Don't have an account? ",
+          child: Column(
+            children: [
+              _HeroHeader(cs: cs).animate().fadeIn(duration: 400.ms),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TextSpan(
-                        text: 'Sign Up',
-                        style: TextStyle(
-                          color: Colors.blue[600],
-                          fontWeight: FontWeight.bold,
+                      _FieldLabel('Email'),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: ctrl.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          hintText: 'you@example.com',
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () => Get.toNamed(AppRoutes.signUp),
-                      ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Email is required';
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) return 'Enter a valid email';
+                          return null;
+                        },
+                      ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+                      const SizedBox(height: 20),
+
+                      _FieldLabel('Password'),
+                      const SizedBox(height: 6),
+                      Obx(() => TextFormField(
+                        controller: ctrl.passwordController,
+                        obscureText: !ctrl.isPasswordVisible.value,
+                        decoration: InputDecoration(
+                          hintText: 'Your password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(ctrl.isPasswordVisible.value
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined),
+                            onPressed: () => ctrl.isPasswordVisible.toggle(),
+                          ),
+                        ),
+                        validator: (v) => v == null || v.isEmpty ? 'Password is required' : null,
+                      )).animate().fadeIn(delay: 150.ms).slideX(begin: -0.05),
+                      const SizedBox(height: 32),
+
+                      Obx(() => SizedBox(
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: ctrl.isLoading.value
+                              ? null
+                              : () {
+                            if (_formKey.currentState!.validate()) ctrl.signIn();
+                          },
+                          child: ctrl.isLoading.value
+                              ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ))
+                              : const Text('Sign In'),
+                        ),
+                      )).animate().fadeIn(delay: 200.ms),
+                      const SizedBox(height: 28),
+
+                      Center(
+                        child: RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            text: "Don't have an account? ",
+                            children: [
+                              TextSpan(
+                                text: 'Sign Up',
+                                style: TextStyle(
+                                  color: cs.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Get.toNamed(AppRoutes.signUp),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 250.ms),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HeroHeader extends StatelessWidget {
+  final ColorScheme cs;
+  const _HeroHeader({required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 52, 24, 40),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [cs.primary, cs.primary.withBlue(220)],
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.location_city_rounded, color: Colors.white, size: 32),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'CivicConnect',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Welcome back! Sign in to continue.',
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.85)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
     );
   }
 }

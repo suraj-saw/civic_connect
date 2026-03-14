@@ -55,7 +55,6 @@ class AppPages {
       binding: IssueBinding(),
       transition: Transition.rightToLeft,
     ),
-    // ── Issue detail (citizen) ──────────────────────────────────────────────
     GetPage(
       name: AppRoutes.issueDetail,
       page: () {

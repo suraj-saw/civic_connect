@@ -12,7 +12,6 @@ class AppRoutes {
   static const String myIssues = '/myIssues';
   static const String issueDetail = '/issueDetail/:id';
 
-  // Navigation helpers
   static Future<dynamic> goToSignIn() => Future.value(signIn);
   static Future<dynamic> goToHomeCitizen() => Future.value(homeCitizen);
   static Future<dynamic> goToHomeAdmin() => Future.value(homeAdmin);

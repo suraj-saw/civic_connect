@@ -7,15 +7,13 @@ import '../../../core/routes/app_routes.dart';
 class SignInController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
   final isLoading = false.obs;
   final isPasswordVisible = false.obs;
 
   Future<void> signIn() async {
     isLoading.value = true;
     try {
-      final userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );

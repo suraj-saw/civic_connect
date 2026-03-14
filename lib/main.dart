@@ -28,8 +28,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'CivicConnect',
       themeMode: themeController.isDark.value ? ThemeMode.dark : ThemeMode.light,
-      theme: TAppTheme.light(seedColor: Colors.blue),
-      darkTheme: TAppTheme.dark(seedColor: Colors.blue),
+      theme: TAppTheme.light(seedColor: const Color(0xFF1565C0)),
+      darkTheme: TAppTheme.dark(seedColor: const Color(0xFF1565C0)),
       home: const RootPage(),
       getPages: AppPages.pages,
     ));
