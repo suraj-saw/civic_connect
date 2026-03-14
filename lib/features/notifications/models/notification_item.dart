@@ -1,5 +1,3 @@
-// lib/features/notifications/models/notification_item.dart
-
 class NotificationItem {
   final String issueId;
   final String categoryId;
@@ -19,12 +17,8 @@ class NotificationItem {
 
   NotificationItem copyWith({bool? isRead}) {
     return NotificationItem(
-      issueId: issueId,
-      categoryId: categoryId,
-      status: status,
-      message: message,
-      timestamp: timestamp,
-      isRead: isRead ?? this.isRead,
+      issueId: issueId, categoryId: categoryId, status: status,
+      message: message, timestamp: timestamp, isRead: isRead ?? this.isRead,
     );
   }
 }

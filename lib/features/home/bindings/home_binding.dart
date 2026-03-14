@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-
 import '../controllers/home_citizen_controller.dart';
 import '../controllers/home_admin_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 
 class DescriptionField extends GetView<ReportIssueController> {
@@ -11,27 +11,22 @@ class DescriptionField extends GetView<ReportIssueController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Description *',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Row(children: [
+          Text('Description', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(' *', style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 14)),
+        ]),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller.descriptionTextController,
-          onChanged: (value) {
-            controller.description.value = value;
+          maxLines: 4,
+          maxLength: 500,
+          onChanged: (v) {
+            controller.description.value = v;
             controller.isFormDirty.value = true;
           },
-          maxLength: 500,
-          minLines: 4,
-          maxLines: 6,
-          decoration: InputDecoration(
-            hintText: 'Provide detailed information about the issue...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+          decoration: const InputDecoration(
+            hintText: 'Describe the issue clearly — what you see, where it is, and any relevant details...',
+            alignLabelWithHint: true,
           ),
         ),
       ],

@@ -22,12 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = ThemeController.to;
-
+    final themeCtrl = ThemeController.to;
     return Obx(() => GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CivicConnect',
-      themeMode: themeController.isDark.value ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themeCtrl.isDark.value ? ThemeMode.dark : ThemeMode.light,
       theme: TAppTheme.light(seedColor: const Color(0xFF1565C0)),
       darkTheme: TAppTheme.dark(seedColor: const Color(0xFF1565C0)),
       home: const RootPage(),

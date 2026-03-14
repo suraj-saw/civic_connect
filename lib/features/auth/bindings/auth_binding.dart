@@ -6,18 +6,8 @@ import '../controllers/sign_up_controller.dart';
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
-    // Repository
-    Get.lazyPut<AuthRepository>(
-          () => AuthRepository(),
-    );
-
-    // Controllers
-    Get.lazyPut<SignInController>(
-          () => SignInController(),
-    );
-
-    Get.lazyPut<SignUpController>(
-          () => SignUpController(),
-    );
+    Get.lazyPut<AuthRepository>(() => AuthRepository());
+    Get.lazyPut<SignInController>(() => SignInController());
+    Get.lazyPut<SignUpController>(() => SignUpController());
   }
 }

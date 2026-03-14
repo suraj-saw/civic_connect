@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../feedback/widgets/feedback_section.dart';
 import '../widgets/media_player/audio_player_widget.dart';
 import '../widgets/media_player/fullscreen_image_page.dart';
@@ -10,7 +11,6 @@ import '../widgets/media_player/video_player_widget.dart';
 
 class IssueDetailCitizenPage extends StatelessWidget {
   final String issueId;
-
   const IssueDetailCitizenPage({super.key, required this.issueId});
 
   @override
@@ -18,20 +18,11 @@ class IssueDetailCitizenPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Issue Details')),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('issues')
-            .doc(issueId)
-            .snapshots(),
+        stream: FirebaseFirestore.instance.collection('issues').doc(issueId).snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           final doc = snapshot.data;
-          if (doc == null || !doc.exists || doc.data() == null) {
-            return const Center(child: Text('Issue not found'));
-          }
-
+          if (doc == null || !doc.exists || doc.data() == null) return const Center(child: Text('Issue not found'));
           final data = doc.data()!;
           final isResolved = data['status']?.toString() == 'resolved';
 
@@ -39,15 +30,15 @@ class IssueDetailCitizenPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(data),
-                _buildLocation(data),
-                _buildMediaSection(data, context),
-                _buildTimeline(data),
+                _header(context, data).animate().fadeIn(duration: 350.ms),
+                _location(context, data).animate().fadeIn(delay: 80.ms),
+                _mediaSection(context, data).animate().fadeIn(delay: 120.ms),
+                _timeline(context, data).animate().fadeIn(delay: 160.ms),
                 if (isResolved) ...[
-                  _buildFeedbackHeader(),
-                  FeedbackSection(issueId: issueId),
+                  _feedbackHeader(context).animate().fadeIn(delay: 200.ms),
+                  FeedbackSection(issueId: issueId).animate().fadeIn(delay: 220.ms),
                 ],
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
               ],
             ),
           );
@@ -56,422 +47,226 @@ class IssueDetailCitizenPage extends StatelessWidget {
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────────
-
-  Widget _buildHeader(Map<String, dynamic> data) {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                _buildStatusChip(data['status']?.toString()),
-              ],
-            ),
-            const Divider(height: 24),
-            Text(
-              data['description'] ?? 'No description',
-              style: const TextStyle(fontSize: 15),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  _formatTimestamp(data['createdAt']),
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.business, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  'Assigned to: ${data['assignedToDept']?.toString().toUpperCase() ?? 'UNKNOWN'}',
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(String? status) {
-    Color color;
-    String label;
-    switch (status?.toLowerCase()) {
-      case 'resolved':
-        color = Colors.green;
-        label = 'RESOLVED';
-        break;
-      case 'in_progress':
-      case 'in-progress':
-        color = Colors.orange;
-        label = 'IN PROGRESS';
-        break;
-      case 'assigned':
-        color = Colors.blue;
-        label = 'ASSIGNED';
-        break;
-      case 'rejected':
-        color = Colors.red;
-        label = 'REJECTED';
-        break;
-      default:
-        color = Colors.grey;
-        label = 'REPORTED';
-    }
+  Widget _header(BuildContext context, Map<String, dynamic> data) {
+    final cs = Theme.of(context).colorScheme;
+    final status = data['status']?.toString() ?? 'reported';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration:
-      BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-      child: Text(
-        label,
-        style: const TextStyle(
-            color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Text(data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
+                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800))),
+              const SizedBox(width: 8),
+              _StatusChip(status: status),
+            ],
+          ),
+          Divider(height: 20, color: cs.outline.withOpacity(0.12)),
+          Text(data['description'] ?? 'No description', style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: cs.onSurface)),
+          const SizedBox(height: 14),
+          _metaRow(context, Icons.access_time_rounded, _fmt(data['createdAt'])),
+          const SizedBox(height: 6),
+          _metaRow(context, Icons.business_rounded, 'Dept: ${data['assignedToDept']?.toString().toUpperCase() ?? 'UNKNOWN'}'),
+          const SizedBox(height: 6),
+          _metaRow(context, Icons.person_outline_rounded, data['reporterEmail'] ?? ''),
+        ],
       ),
     );
   }
 
-  // ── Location ───────────────────────────────────────────────────────────────
+  Widget _metaRow(BuildContext context, IconData icon, String text) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: cs.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant), overflow: TextOverflow.ellipsis)),
+      ],
+    );
+  }
 
-  Widget _buildLocation(Map<String, dynamic> data) {
+  Widget _location(BuildContext context, Map<String, dynamic> data) {
     final location = data['location'];
     if (location is! Map) return const SizedBox.shrink();
-
     final lat = (location['latitude'] as num?)?.toDouble();
     final lng = (location['longitude'] as num?)?.toDouble();
     if (lat == null || lng == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Location',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('Lat: ${lat.toStringAsFixed(6)}, Lng: ${lng.toStringAsFixed(6)}'),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.map_outlined, size: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.location_on_rounded, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Location', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          const SizedBox(height: 8),
+          Text('${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}', style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant)),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.map_rounded, size: 16),
               label: const Text('Open in Maps'),
               onPressed: () async {
-                final uri = Uri.parse(
-                    'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
                 if (await canLaunchUrl(uri)) launchUrl(uri);
               },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Media ──────────────────────────────────────────────────────────────────
-
-  Widget _buildMediaSection(Map<String, dynamic> data, BuildContext context) {
-    var imageUrls = (data['imageUrls'] as List?)
-        ?.map((e) => e.toString())
-        .toList() ??
-        [];
+  Widget _mediaSection(BuildContext context, Map<String, dynamic> data) {
+    var imageUrls = (data['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? [];
     final single = data['imageUrl'] as String?;
     if (imageUrls.isEmpty && single != null) imageUrls.add(single);
-
     final audioUrl = data['audioUrl'] as String?;
     final videoUrl = data['videoUrl'] as String?;
+    if (imageUrls.isEmpty && audioUrl == null && videoUrl == null) return const SizedBox.shrink();
 
-    if (imageUrls.isEmpty && audioUrl == null && videoUrl == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
+    final cs = Theme.of(context).colorScheme;
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Evidence',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-
-            // ── Photos ─────────────────────────────────────────────────────
-            if (imageUrls.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Icon(Icons.photo_library_outlined,
-                      size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Photos (${imageUrls.length})',
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ],
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.perm_media_outlined, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Evidence', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          if (imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text('Photos (${imageUrls.length})', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullscreenImagePage(imageUrls: imageUrls, initialIndex: 0))),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(imageUrls[0], fit: BoxFit.cover,
+                      loadingBuilder: (_, child, p) => p == null ? child : Container(color: cs.surfaceContainerHighest)),
+                ),
               ),
-              const SizedBox(height: 10),
-              // First image — wide hero thumbnail
-              GestureDetector(
-                onTap: () => _openGallery(context, imageUrls, 0),
-                child: Hero(
-                  tag: 'img_0_$issueId',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            imageUrls[0],
-                            fit: BoxFit.cover,
-                            loadingBuilder: (_, child, p) => p == null
-                                ? child
-                                : Container(
-                                color: Colors.grey[200],
-                                child: const Center(
-                                    child: CircularProgressIndicator())),
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, size: 40),
-                            ),
-                          ),
-                          // Overlay: photo count badge + zoom icon
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.zoom_out_map,
-                                      color: Colors.white, size: 13),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    imageUrls.length > 1
-                                        ? '1 / ${imageUrls.length}'
-                                        : 'View',
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 11),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+            ),
+            if (imageUrls.length > 1) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 56,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: imageUrls.length - 1,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) => GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullscreenImagePage(imageUrls: imageUrls, initialIndex: i + 1))),
+                    child: ClipRRect(borderRadius: BorderRadius.circular(8),
+                        child: Image.network(imageUrls[i + 1], width: 56, height: 56, fit: BoxFit.cover)),
                   ),
                 ),
               ),
-              // Additional thumbnails row (when more than 1 image)
-              if (imageUrls.length > 1) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 72,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: imageUrls.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (_, i) => GestureDetector(
-                      onTap: () => _openGallery(context, imageUrls, i),
-                      child: Hero(
-                        tag: 'img_${i}_$issueId',
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Stack(
-                            children: [
-                              Image.network(
-                                imageUrls[i],
-                                width: 72,
-                                height: 72,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  width: 72,
-                                  height: 72,
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.broken_image,
-                                      size: 24),
-                                ),
-                              ),
-                              // Active indicator
-                              if (i == 0)
-                                Positioned(
-                                  bottom: 4,
-                                  left: 0,
-                                  right: 0,
-                                  child: Center(
-                                    child: Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-
-            // ── Audio ───────────────────────────────────────────────────────
-            if (audioUrl != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.mic_outlined, size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  const Text('Audio',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              AudioPlayerWidget(audioUrl: audioUrl),
-            ],
-
-            // ── Video ───────────────────────────────────────────────────────
-            if (videoUrl != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.videocam_outlined,
-                      size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  const Text('Video',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              VideoPlayerWidget(videoUrl: videoUrl),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  void _openGallery(
-      BuildContext context, List<String> urls, int startIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FullscreenImagePage(
-          imageUrls: urls,
-          initialIndex: startIndex,
-        ),
-      ),
-    );
-  }
-
-  // ── Timeline ───────────────────────────────────────────────────────────────
-
-  Widget _buildTimeline(Map<String, dynamic> data) {
-    final timeline = (data['timeline'] as List?)
-        ?.whereType<Map<String, dynamic>>()
-        .toList() ??
-        [];
-
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Status Timeline',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          if (audioUrl != null) ...[
             const SizedBox(height: 16),
-            if (timeline.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No updates yet',
-                      style: TextStyle(color: Colors.grey)),
-                ),
-              )
-            else
-              ...timeline.reversed.toList().asMap().entries.map(
-                    (e) =>
-                    _buildTimelineItem(e.value, e.key == timeline.length - 1),
-              ),
+            Text('Voice Note', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            AudioPlayerWidget(audioUrl: audioUrl),
           ],
-        ),
+          if (videoUrl != null) ...[
+            const SizedBox(height: 16),
+            Text('Video', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            VideoPlayerWidget(videoUrl: videoUrl),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildTimelineItem(Map<String, dynamic> item, bool isLast) {
+  Widget _timeline(BuildContext context, Map<String, dynamic> data) {
+    final timeline = (data['timeline'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? [];
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.timeline_rounded, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Status Timeline', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          const SizedBox(height: 16),
+          if (timeline.isEmpty)
+            Center(child: Padding(padding: const EdgeInsets.all(16),
+                child: Text('No updates yet', style: GoogleFonts.inter(color: cs.onSurfaceVariant))))
+          else
+            ...timeline.reversed.toList().asMap().entries.map((e) => _timelineItem(context, e.value, e.key == timeline.length - 1)),
+        ],
+      ),
+    );
+  }
+
+  Widget _timelineItem(BuildContext context, Map<String, dynamic> item, bool isLast) {
+    final cs = Theme.of(context).colorScheme;
     final ts = item['timestamp'] as Timestamp?;
-    final dateStr = ts != null
-        ? DateFormat('dd MMM yyyy, hh:mm a').format(ts.toDate())
-        : 'Unknown';
+    final dateStr = ts != null ? DateFormat('dd MMM yyyy, hh:mm a').format(ts.toDate()) : 'Unknown';
+    final status = item['status']?.toString() ?? '';
+    final statusColor = _statusColor(status);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: const BoxDecoration(
-                  color: Colors.blue, shape: BoxShape.circle),
-            ),
-            if (!isLast)
-              Container(width: 2, height: 44, color: Colors.grey.shade200),
+            Container(width: 12, height: 12, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+            if (!isLast) Container(width: 2, height: 44, color: cs.outline.withOpacity(0.2)),
           ],
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  (item['status'] ?? '').toString().toUpperCase(),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
-                ),
+                Text(status.toUpperCase(), style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12, color: statusColor)),
                 const SizedBox(height: 2),
-                Text(item['message']?.toString() ?? ''),
+                Text(item['message']?.toString() ?? '', style: GoogleFonts.inter(fontSize: 13, height: 1.4)),
                 const SizedBox(height: 2),
-                Text(dateStr,
-                    style:
-                    const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(dateStr, style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
               ],
             ),
           ),
@@ -480,49 +275,62 @@ class IssueDetailCitizenPage extends StatelessWidget {
     );
   }
 
-  // ── Feedback header ────────────────────────────────────────────────────────
-
-  Widget _buildFeedbackHeader() {
+  Widget _feedbackHeader(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Row(
-        children: [
-          const Text(
-            'Citizen Feedback',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.orange.shade200),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined,
-                    size: 12, color: Colors.orange.shade700),
-                const SizedBox(width: 4),
-                Text(
-                  'Accountability',
-                  style: TextStyle(fontSize: 10, color: Colors.orange.shade700),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Row(children: [
+        Text('Citizen Feedback', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: cs.tertiaryContainer, borderRadius: BorderRadius.circular(20)),
+          child: Row(children: [
+            Icon(Icons.shield_outlined, size: 12, color: cs.onTertiaryContainer),
+            const SizedBox(width: 4),
+            Text('Accountability', style: GoogleFonts.inter(fontSize: 10, color: cs.onTertiaryContainer, fontWeight: FontWeight.w600)),
+          ]),
+        ),
+      ]),
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  String _formatTimestamp(dynamic raw) {
-    if (raw is Timestamp) {
-      return DateFormat('dd MMM yyyy, hh:mm a').format(raw.toDate());
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'resolved': return Colors.green;
+      case 'in-progress': return Colors.orange;
+      case 'assigned': return Colors.blue;
+      case 'rejected': return Colors.red;
+      case 'reopened': return Colors.deepOrange;
+      default: return Colors.grey;
     }
+  }
+
+  String _fmt(dynamic ts) {
+    if (ts is Timestamp) return DateFormat('dd MMM yyyy, hh:mm a').format(ts.toDate());
     return 'Unknown date';
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+  @override
+  Widget build(BuildContext context) {
+    final color = _color(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.35))),
+      child: Text(status.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+    );
+  }
+  Color _color(String s) {
+    switch (s.toLowerCase()) {
+      case 'resolved': return Colors.green;
+      case 'in-progress': return Colors.orange;
+      case 'assigned': return Colors.blue;
+      case 'rejected': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 }

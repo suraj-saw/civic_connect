@@ -11,84 +11,116 @@ import '../../auth/pages/sign_in_page.dart';
 import '../../home/pages/home_citizen_page.dart';
 import '../../home/pages/home_admin.dart';
 
-class RootPage extends StatelessWidget {
+class RootPage extends StatefulWidget {
   const RootPage({super.key});
+
+  @override
+  State<RootPage> createState() => _RootPageState();
+}
+
+class _RootPageState extends State<RootPage> {
+  // Cache the resolved role per uid to avoid re-fetching on every rebuild.
+  String? _cachedUid;
+  String? _cachedRole;
+  bool _fetchingRole = false;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
+        // While waiting for Firebase to initialize, show a loader.
         if (authSnapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const _Loader();
         }
 
-        // Not logged in -> show SignInPage
-        if (!authSnapshot.hasData || authSnapshot.data == null) {
+        final user = authSnapshot.data;
+
+        // Not logged in → show sign-in.
+        if (user == null) {
           _cleanupControllers();
+          _cachedUid = null;
+          _cachedRole = null;
           return SignInPage();
         }
 
-        final uid = authSnapshot.data!.uid;
+        // Same user, role already resolved → go straight to home.
+        if (_cachedUid == user.uid && _cachedRole != null) {
+          return _homeForRole(_cachedRole!);
+        }
 
-        return FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
-          builder: (context, userSnapshot) {
-            if (userSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
+        // New uid — fetch role once.
+        if (!_fetchingRole || _cachedUid != user.uid) {
+          _fetchingRole = true;
+          _cachedUid = user.uid;
+          _fetchRole(user.uid);
+        }
 
-            // If permission denied or invalid user doc -> logout cleanly
-            if (userSnapshot.hasError ||
-                !userSnapshot.hasData ||
-                !userSnapshot.data!.exists) {
-              FirebaseAuth.instance.signOut();
-              _cleanupControllers();
-              return SignInPage();
-            }
-
-            final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
-            if (userData == null) {
-              FirebaseAuth.instance.signOut();
-              _cleanupControllers();
-              return SignInPage();
-            }
-
-            final role = userData['role'] as String?;
-
-            if (role == 'admin') {
-              return const HomeAdminPage();
-            }
-
-            return const HomeCitizenPage();
-          },
-        );
+        // Show loader while fetching role.
+        return const _Loader();
       },
     );
   }
 
-  /// Clean up auth-dependent controllers.
-  /// NOTE: SignInController is intentionally NOT deleted here to avoid
-  /// disposing TextEditingControllers while SignInPage is rebuilding.
+  Future<void> _fetchRole(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!doc.exists || doc.data() == null) {
+        // Firestore doc missing — sign out cleanly.
+        await FirebaseAuth.instance.signOut();
+        _cleanupControllers();
+        return;
+      }
+
+      final role = doc.data()!['role'] as String? ?? 'citizen';
+
+      if (mounted) {
+        setState(() {
+          _cachedRole = role;
+          _fetchingRole = false;
+        });
+      }
+    } catch (e) {
+      // Network or permission error — do NOT sign the user out.
+      // Just retry on the next build triggered by auth state.
+      if (mounted) {
+        setState(() { _fetchingRole = false; });
+      }
+    }
+  }
+
+  Widget _homeForRole(String role) {
+    if (role == 'admin') return const HomeAdminPage();
+    return const HomeCitizenPage();
+  }
+
   void _cleanupControllers() {
     if (Get.isRegistered<HomeAdminController>()) {
       Get.delete<HomeAdminController>(force: true);
     }
-
     if (Get.isRegistered<HomeCitizenController>()) {
       Get.delete<HomeCitizenController>(force: true);
     }
-
     if (Get.isRegistered<MyIssuesController>()) {
       Get.delete<MyIssuesController>(force: true);
     }
-
     if (Get.isRegistered<IssueCategoryController>()) {
       Get.delete<IssueCategoryController>(force: true);
     }
+  }
+}
+
+class _Loader extends StatelessWidget {
+  const _Loader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
   }
 }

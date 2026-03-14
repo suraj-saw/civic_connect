@@ -1,109 +1,114 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'media_player/audio_player_widget.dart';
 import 'media_player/video_player_widget.dart';
 import 'media_player/fullscreen_image_page.dart';
 
+Color statusColorFor(String? status) {
+  switch (status?.toLowerCase()) {
+    case 'resolved': return Colors.green;
+    case 'in-progress': return Colors.orange;
+    case 'assigned': return Colors.blue;
+    case 'reassigned': return Colors.purple;
+    case 'rejected': return Colors.red;
+    case 'reopened': return Colors.deepOrange;
+    default: return Colors.grey;
+  }
+}
+
+String formatTimestamp(dynamic ts) {
+  if (ts is Timestamp) return DateFormat('MMM dd, yyyy • hh:mm a').format(ts.toDate());
+  return 'N/A';
+}
+
 class AdminIssueHeaderSection extends StatelessWidget {
   final Map<String, dynamic> data;
-
-  const AdminIssueHeaderSection({
-    super.key,
-    required this.data,
-  });
+  const AdminIssueHeaderSection({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final cs = Theme.of(context).colorScheme;
+    final status = data['status']?.toString();
+    return Container(
       margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _StatusChip(status: data['status']?.toString()),
-              ],
-            ),
-            const Divider(height: 24),
-            Text(
-              data['description'] ?? 'No description',
-              style: const TextStyle(fontSize: 15),
-            ),
-            const SizedBox(height: 16),
-            _InfoRow(label: 'Reporter', value: data['reporterEmail'] ?? 'Unknown'),
-            _InfoRow(
-              label: 'Department',
-              value: data['assignedToDept']?.toUpperCase() ?? 'N/A',
-            ),
-            _InfoRow(label: 'Reported', value: formatTimestamp(data['createdAt'])),
-            if (data['lastReassignedAt'] != null)
-              _InfoRow(
-                label: 'Last Reassigned',
-                value: formatTimestamp(data['lastReassignedAt']),
-              ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: Text(data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
+                style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800))),
+            const SizedBox(width: 8),
+            _StatusChip(status: status),
+          ]),
+          Divider(height: 20, color: cs.outline.withOpacity(0.12)),
+          Text(data['description'] ?? 'No description', style: GoogleFonts.inter(fontSize: 14, height: 1.5)),
+          const SizedBox(height: 14),
+          _row(context, Icons.person_outline_rounded, data['reporterEmail'] ?? 'Unknown'),
+          const SizedBox(height: 6),
+          _row(context, Icons.business_rounded, (data['assignedToDept'] ?? 'N/A').toString().toUpperCase()),
+          const SizedBox(height: 6),
+          _row(context, Icons.access_time_rounded, formatTimestamp(data['createdAt'])),
+          if (data['lastReassignedAt'] != null) ...[
+            const SizedBox(height: 6),
+            _row(context, Icons.swap_horiz_rounded, 'Reassigned: ${formatTimestamp(data['lastReassignedAt'])}'),
           ],
-        ),
+        ],
       ),
     );
+  }
+
+  Widget _row(BuildContext context, IconData icon, String text) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(children: [
+      Icon(icon, size: 14, color: cs.onSurfaceVariant),
+      const SizedBox(width: 6),
+      Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant), overflow: TextOverflow.ellipsis)),
+    ]);
   }
 }
 
 class AdminIssueLocationSection extends StatelessWidget {
   final Map<String, dynamic> data;
   final void Function(double lat, double lng) onOpenMap;
-
-  const AdminIssueLocationSection({
-    super.key,
-    required this.data,
-    required this.onOpenMap,
-  });
+  const AdminIssueLocationSection({super.key, required this.data, required this.onOpenMap});
 
   @override
   Widget build(BuildContext context) {
     final location = data['location'];
     if (location is! Map<String, dynamic>) return const SizedBox.shrink();
-
     final lat = (location['latitude'] as num?)?.toDouble();
     final lng = (location['longitude'] as num?)?.toDouble();
     if (lat == null || lng == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Location',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text('Latitude: ${lat.toStringAsFixed(6)}'),
-            Text('Longitude: ${lng.toStringAsFixed(6)}'),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.map),
-                label: const Text('Open in Maps'),
-                onPressed: () => onOpenMap(lat, lng),
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.location_on_rounded, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Location', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          const SizedBox(height: 8),
+          Text('${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}', style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant)),
+          const SizedBox(height: 10),
+          SizedBox(width: double.infinity,
+              child: OutlinedButton.icon(icon: const Icon(Icons.map_rounded, size: 16), label: const Text('Open in Maps'), onPressed: () => onOpenMap(lat, lng))),
+        ],
       ),
     );
   }
@@ -111,191 +116,74 @@ class AdminIssueLocationSection extends StatelessWidget {
 
 class AdminIssueMediaSection extends StatelessWidget {
   final Map<String, dynamic> data;
-
   const AdminIssueMediaSection({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = data['imageUrl'] as String?;
-    final imageUrls = (data['imageUrls'] as List<dynamic>? ?? [])
-        .whereType<String>()
-        .toList();
-    final videoUrl = data['videoUrl'] as String?;
-    final audioUrl = data['audioUrl'] as String?;
+    final imageUrl  = data['imageUrl'] as String?;
+    final imageUrls = (data['imageUrls'] as List<dynamic>? ?? []).whereType<String>().toList();
+    final audioUrl  = data['audioUrl'] as String?;
+    final videoUrl  = data['videoUrl'] as String?;
+    final images    = <String>[...imageUrls];
+    if (images.isEmpty && imageUrl != null && imageUrl.isNotEmpty) images.add(imageUrl);
+    if (images.isEmpty && audioUrl == null && videoUrl == null) return const SizedBox.shrink();
 
-    // Merge imageUrls + legacy single imageUrl
-    final images = <String>[...imageUrls];
-    if (images.isEmpty && imageUrl != null && imageUrl.isNotEmpty) {
-      images.add(imageUrl);
-    }
-
-    if (images.isEmpty && audioUrl == null && videoUrl == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Evidence',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-
-            // ── Photos ──────────────────────────────────────────────────
-            if (images.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Icon(Icons.photo_library_outlined,
-                      size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Photos (${images.length})',
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ],
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.perm_media_outlined, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Evidence', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          if (images.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullscreenImagePage(imageUrls: images, initialIndex: 0))),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(aspectRatio: 16 / 9,
+                    child: Image.network(images[0], fit: BoxFit.cover,
+                        loadingBuilder: (_, child, p) => p == null ? child : Container(color: cs.surfaceContainerHighest))),
               ),
-              const SizedBox(height: 10),
-              // Hero wide thumbnail
-              GestureDetector(
-                onTap: () => _openGallery(context, images, 0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          images[0],
-                          fit: BoxFit.cover,
-                          loadingBuilder: (_, child, p) => p == null
-                              ? child
-                              : Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                  child: CircularProgressIndicator())),
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.broken_image, size: 40),
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.zoom_out_map,
-                                    color: Colors.white, size: 13),
-                                const SizedBox(width: 4),
-                                Text(
-                                  images.length > 1
-                                      ? '1 / ${images.length}'
-                                      : 'View',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+            ),
+            if (images.length > 1) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 60,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal, itemCount: images.length - 1,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) => GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullscreenImagePage(imageUrls: images, initialIndex: i + 1))),
+                    child: ClipRRect(borderRadius: BorderRadius.circular(8),
+                        child: Image.network(images[i + 1], width: 60, height: 60, fit: BoxFit.cover)),
                   ),
                 ),
               ),
-              // Thumbnail strip when multiple photos
-              if (images.length > 1) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 72,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: images.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (_, i) => GestureDetector(
-                      onTap: () => _openGallery(context, images, i),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          images[i],
-                          width: 72,
-                          height: 72,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 72,
-                            height: 72,
-                            color: Colors.grey[300],
-                            child:
-                            const Icon(Icons.broken_image, size: 24),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-
-            // ── Audio ────────────────────────────────────────────────────
-            if (audioUrl != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.mic_outlined,
-                      size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  const Text('Audio',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              AudioPlayerWidget(audioUrl: audioUrl),
-            ],
-
-            // ── Video ────────────────────────────────────────────────────
-            if (videoUrl != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.videocam_outlined,
-                      size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
-                  const Text('Video',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              VideoPlayerWidget(videoUrl: videoUrl),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  void _openGallery(
-      BuildContext context, List<String> urls, int startIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FullscreenImagePage(
-          imageUrls: urls,
-          initialIndex: startIndex,
-        ),
+          if (audioUrl != null) ...[
+            const SizedBox(height: 16),
+            Text('Audio', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            AudioPlayerWidget(audioUrl: audioUrl),
+          ],
+          if (videoUrl != null) ...[
+            const SizedBox(height: 16),
+            Text('Video', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            VideoPlayerWidget(videoUrl: videoUrl),
+          ],
+        ],
       ),
     );
   }
@@ -303,172 +191,74 @@ class AdminIssueMediaSection extends StatelessWidget {
 
 class AdminIssueTimelineSection extends StatelessWidget {
   final Map<String, dynamic> data;
-
-  const AdminIssueTimelineSection({
-    super.key,
-    required this.data,
-  });
+  const AdminIssueTimelineSection({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final timeline = data['timeline'] as List<dynamic>? ?? [];
+    final timeline = (data['timeline'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+    if (timeline.isEmpty) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
 
-    if (timeline.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
+    return Container(
       margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Status Timeline',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            ...timeline
-                .whereType<Map<String, dynamic>>()
-                .toList()
-                .reversed
-                .map(_buildTimelineItem),
-          ],
-        ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.timeline_rounded, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text('Status Timeline', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14)),
+          ]),
+          const SizedBox(height: 14),
+          ...timeline.reversed.map(_buildItem),
+        ],
       ),
     );
   }
 
-  Widget _buildTimelineItem(Map<String, dynamic> item) {
+  Widget _buildItem(Map<String, dynamic> item) {
     final statusColor = statusColorFor(item['status']?.toString());
-    final timestamp = item['timestamp'] as Timestamp?;
-    final dateStr = timestamp != null
-        ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp.toDate())
-        : 'N/A';
+    final ts = item['timestamp'] as Timestamp?;
+    final dateStr = ts != null ? DateFormat('MMM dd, yyyy • hh:mm a').format(ts.toDate()) : 'N/A';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-            ),
-          ),
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 12, height: 12, margin: const EdgeInsets.only(top: 3),
+              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
           const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['status']?.toString().toUpperCase() ?? 'UNKNOWN',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(item['message']?.toString() ?? ''),
-                const SizedBox(height: 4),
-                Text(
-                  'By: ${item['updatedByEmail'] ?? 'Unknown'}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Text(
-                  dateStr,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(item['status']?.toString().toUpperCase() ?? 'UNKNOWN',
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: statusColor)),
+            const SizedBox(height: 2),
+            Text(item['message']?.toString() ?? '', style: GoogleFonts.inter(fontSize: 13)),
+            const SizedBox(height: 2),
+            Text('By: ${item['updatedByEmail'] ?? 'Unknown'}  •  $dateStr',
+                style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
+          ])),
+        ]),
+      );
+    });
   }
 }
 
 class _StatusChip extends StatelessWidget {
   final String? status;
-
   const _StatusChip({required this.status});
-
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      label: Text(
-        status?.toUpperCase() ?? 'UNKNOWN',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-      backgroundColor: statusColorFor(status),
+    final color = statusColorFor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.35))),
+      child: Text(status?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
     );
   }
-}
-
-Color statusColorFor(String? status) {
-  switch (status?.toLowerCase()) {
-    case 'resolved':
-      return Colors.green;
-    case 'in_progress':
-    case 'in-progress':
-      return Colors.orange;
-    case 'assigned':
-      return Colors.blue;
-    case 'reassigned':
-      return Colors.purple;
-    case 'rejected':
-      return Colors.red;
-    default:
-      return Colors.grey;
-  }
-}
-
-String formatTimestamp(dynamic timestamp) {
-  if (timestamp is Timestamp) {
-    return DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp.toDate());
-  }
-  return 'N/A';
 }

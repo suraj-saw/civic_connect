@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 import 'category_dropdown.dart';
 import 'description_field.dart';
@@ -10,48 +10,55 @@ class ReportIssueForm extends GetView<ReportIssueController> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLocationPreview(context),
+        _locationPreview(context, cs),
         const SizedBox(height: 16),
         const DescriptionField(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         const CategoryDropdown(),
       ],
     );
   }
 
-  Widget _buildLocationPreview(BuildContext context) {
+  Widget _locationPreview(BuildContext context, ColorScheme cs) {
     return Obx(() {
       final location = controller.issueLocation.value;
-
+      final hasLocation = location != null;
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.blue.shade100),
+          color: hasLocation ? cs.primaryContainer.withOpacity(0.35) : cs.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: hasLocation ? cs.primary.withOpacity(0.3) : cs.outline.withOpacity(0.2)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              'Issue Location Preview',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+            Icon(
+              hasLocation ? Icons.my_location_rounded : Icons.location_searching_rounded,
+              color: hasLocation ? cs.primary : cs.onSurfaceVariant,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Issue Location', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: cs.onSurface)),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasLocation
+                        ? 'Lat: ${location['latitude']?.toStringAsFixed(5)}, Lng: ${location['longitude']?.toStringAsFixed(5)}'
+                        : 'Fetching GPS location...',
+                    style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 6),
-            if (location == null)
-              const Text('Fetching location or waiting for permission...')
-            else
-              Text(
-                'Lat: ${location['latitude']?.toStringAsFixed(6)} | '
-                    'Lng: ${location['longitude']?.toStringAsFixed(6)} '
-                    '(±${(location['accuracy'] ?? 0).toStringAsFixed(1)}m)',
-              ),
+            if (hasLocation) Icon(Icons.check_circle_rounded, color: cs.primary, size: 18),
           ],
         ),
       );

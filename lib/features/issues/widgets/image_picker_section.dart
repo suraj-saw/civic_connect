@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 
 class ImagePickerSection extends GetView<ReportIssueController> {
@@ -8,154 +9,96 @@ class ImagePickerSection extends GetView<ReportIssueController> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Photos',
-                      style: Get.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Text(
-                      ' *',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Text('Photos', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(' *', style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 14)),
+              ]),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: controller.selectedImages.isEmpty ? cs.errorContainer.withOpacity(0.4) : cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                Obx(() => Text(
-                  '${controller.selectedImages.length}/5',
-                  style: Get.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                )),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'At least one photo is required',
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              if (controller.selectedImages.isEmpty) {
-                return _buildEmptyState();
-              }
-              return _buildImageGrid();
-            }),
-          ],
-        ),
+                child: Text('${controller.selectedImages.length}/5',
+                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
+                        color: controller.selectedImages.isEmpty ? cs.onErrorContainer : cs.onPrimaryContainer)),
+              )),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('At least one photo required', style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          Obx(() => controller.selectedImages.isEmpty ? _emptyState(cs) : _grid(context, cs)),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _emptyState(ColorScheme cs) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
         icon: const Icon(Icons.camera_alt_outlined),
         label: const Text('Take Photo'),
-        // Camera only — calls pickImage() which uses ImageSource.camera
         onPressed: controller.pickImage,
       ),
     );
   }
 
-  Widget _buildImageGrid() {
+  Widget _grid(BuildContext context, ColorScheme cs) {
     return Column(
       children: [
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
           itemCount: controller.selectedImages.length,
-          itemBuilder: (context, index) => _buildImageTile(index),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            // Add another photo — only shown when under the limit
-            if (controller.selectedImages.length < 5)
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.add_a_photo_outlined),
-                  label: const Text('Add Photo'),
-                  onPressed: controller.pickImage,
+          itemBuilder: (_, i) => Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(File(controller.selectedImages[i].path), fit: BoxFit.cover),
+              ),
+              Positioned(
+                top: 4, right: 4,
+                child: GestureDetector(
+                  onTap: () => controller.removeImage(i),
+                  child: Container(
+                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                  ),
                 ),
               ),
-            if (controller.selectedImages.length < 5)
-              const SizedBox(width: 8),
-            // Remove all photos
-            Expanded(
-              child: TextButton.icon(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: const Text(
-                  'Remove All',
-                  style: TextStyle(color: Colors.red),
-                ),
-                // removeAllImages() takes no args — valid VoidCallback
-                onPressed: controller.removeAllImages,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildImageTile(int index) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.file(
-              File(controller.selectedImages[index].path),
-              fit: BoxFit.cover,
-            ),
+            ],
           ),
         ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            // Lambda passes the required index — avoids the VoidCallback mismatch
-            onTap: () => controller.removeImage(index),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.red[400],
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(4),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ),
-        ),
+        const SizedBox(height: 10),
+        Row(children: [
+          if (controller.selectedImages.length < 5)
+            Expanded(child: OutlinedButton.icon(icon: const Icon(Icons.add_a_photo_outlined, size: 16), label: const Text('Add More'), onPressed: controller.pickImage)),
+          if (controller.selectedImages.length < 5) const SizedBox(width: 8),
+          Expanded(child: TextButton.icon(
+            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
+            label: const Text('Remove All', style: TextStyle(color: Colors.red)),
+            onPressed: controller.removeAllImages,
+          )),
+        ]),
       ],
     );
   }

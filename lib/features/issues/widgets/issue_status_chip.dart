@@ -1,47 +1,48 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_text_styles.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class IssueStatusChip extends StatelessWidget {
   final String status;
-
   const IssueStatusChip({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final statusData = _getStatusData(status);
-
-    return Chip(
-      avatar: Icon(statusData.icon, size: 18, color: Colors.white),
-      label: Text(
-        status.toUpperCase(),
-        style: AppTextStyles.chipLabel,
+    final color = _color(status);
+    final icon  = _icon(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
-      backgroundColor: statusData.color,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 5),
+        Text(status.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+      ]),
     );
   }
 
-  _StatusData _getStatusData(String status) {
-    switch (status.toLowerCase()) {
-      case 'reported':
-        return _StatusData(AppColors.statusReported, Icons.report);
-      case 'assigned':
-        return _StatusData(AppColors.statusAssigned, Icons.assignment);
-      case 'in-progress':
-        return _StatusData(AppColors.statusInProgress, Icons.hourglass_bottom);
-      case 'resolved':
-        return _StatusData(AppColors.statusResolved, Icons.check_circle);
-      case 'rejected':
-        return _StatusData(AppColors.statusRejected, Icons.cancel);
-      default:
-        return _StatusData(Colors.grey, Icons.help);
+  Color _color(String s) {
+    switch (s.toLowerCase()) {
+      case 'resolved': return Colors.green;
+      case 'in-progress': return Colors.orange;
+      case 'assigned': return Colors.blue;
+      case 'rejected': return Colors.red;
+      case 'reopened': return Colors.deepOrange;
+      default: return Colors.grey;
     }
   }
-}
 
-class _StatusData {
-  final Color color;
-  final IconData icon;
-
-  _StatusData(this.color, this.icon);
+  IconData _icon(String s) {
+    switch (s.toLowerCase()) {
+      case 'resolved': return Icons.check_circle_rounded;
+      case 'in-progress': return Icons.hourglass_bottom_rounded;
+      case 'assigned': return Icons.assignment_rounded;
+      case 'rejected': return Icons.cancel_rounded;
+      case 'reopened': return Icons.refresh_rounded;
+      default: return Icons.report_rounded;
+    }
+  }
 }

@@ -4,13 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../controllers/sign_up_controller.dart';
 import '../../../core/routes/app_routes.dart';
 
 class SignUpPage extends StatelessWidget {
   SignUpPage({super.key});
-
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -23,120 +21,92 @@ class SignUpPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _SignUpHeroHeader(cs: cs),
+              _Header(cs: cs).animate().fadeIn(duration: 500.ms),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _FieldLabel('Full Name'),
+                      _label('Full Name'),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: ctrl.nameController,
-                        decoration: const InputDecoration(
-                          hintText: 'Your full name',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter required field' : null,
-                      ),
-                      const SizedBox(height: 18),
-
-                      _FieldLabel('Phone Number'),
+                        decoration: const InputDecoration(hintText: 'John Doe', prefixIcon: Icon(Icons.person_outline)),
+                        validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                      ).animate().fadeIn(delay: 80.ms).slideX(begin: -0.04),
+                      const SizedBox(height: 16),
+                      _label('Phone Number'),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: ctrl.phoneController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        decoration: const InputDecoration(
-                          hintText: '10-digit mobile number',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+                        decoration: const InputDecoration(hintText: '9876543210', prefixIcon: Icon(Icons.phone_outlined), prefixText: '+91 '),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Enter required field';
+                          if (v == null || v.isEmpty) return 'Phone is required';
                           if (v.length != 10) return 'Enter a valid 10-digit number';
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 18),
-
-                      _FieldLabel('Email'),
+                      ).animate().fadeIn(delay: 120.ms).slideX(begin: -0.04),
+                      const SizedBox(height: 16),
+                      _label('Email'),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: ctrl.emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          hintText: 'you@example.com',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
+                        decoration: const InputDecoration(hintText: 'you@example.com', prefixIcon: Icon(Icons.email_outlined)),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Enter required field';
+                          if (v == null || v.isEmpty) return 'Email is required';
                           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) return 'Enter a valid email';
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 18),
-
-                      _FieldLabel('Password'),
+                      ).animate().fadeIn(delay: 160.ms).slideX(begin: -0.04),
+                      const SizedBox(height: 16),
+                      _label('Password'),
                       const SizedBox(height: 6),
                       Obx(() => TextFormField(
                         controller: ctrl.passwordController,
                         obscureText: !ctrl.isPasswordVisible.value,
                         decoration: InputDecoration(
-                          hintText: 'Create a password',
+                          hintText: '••••••••',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
-                            icon: Icon(ctrl.isPasswordVisible.value
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
+                            icon: Icon(ctrl.isPasswordVisible.value ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                             onPressed: () => ctrl.isPasswordVisible.toggle(),
                           ),
                         ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter required field' : null,
-                      )),
+                        validator: (v) => v == null || v.isEmpty ? 'Password is required' : null,
+                      )).animate().fadeIn(delay: 200.ms).slideX(begin: -0.04),
                       const SizedBox(height: 32),
-
                       Obx(() => SizedBox(
                         height: 54,
                         child: ElevatedButton(
                           onPressed: ctrl.isLoading.value
                               ? null
-                              : () {
-                            if (_formKey.currentState!.validate()) ctrl.sendOtp();
-                          },
+                              : () { if (_formKey.currentState!.validate()) ctrl.sendOtp(); },
                           child: ctrl.isLoading.value
-                              ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                              : const Text('Send OTP & Continue'),
+                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                              : const Text('Create Account'),
                         ),
-                      )),
-                      const SizedBox(height: 28),
-
+                      )).animate().fadeIn(delay: 240.ms),
+                      const SizedBox(height: 24),
                       Center(
                         child: RichText(
                           text: TextSpan(
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                            style: GoogleFonts.inter(fontSize: 14, color: cs.onSurface),
                             text: 'Already have an account? ',
                             children: [
                               TextSpan(
                                 text: 'Sign In',
                                 style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () => Get.toNamed(AppRoutes.signIn),
+                                recognizer: TapGestureRecognizer()..onTap = () => Get.toNamed(AppRoutes.signIn),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 280.ms),
                     ],
                   ),
                 ),
@@ -147,66 +117,39 @@ class SignUpPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _label(String text) => Text(text, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13));
 }
 
-class _SignUpHeroHeader extends StatelessWidget {
+class _Header extends StatelessWidget {
   final ColorScheme cs;
-  const _SignUpHeroHeader({required this.cs});
-
+  const _Header({required this.cs});
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 52, 24, 36),
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 36),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [cs.primary, cs.primary.withBlue(220)],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [cs.primary, Color.lerp(cs.primary, cs.tertiary, 0.35)!],
         ),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 32),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.how_to_reg_rounded, color: Colors.white, size: 32),
           ),
           const SizedBox(height: 20),
-          Text(
-            'Create Account',
-            style: GoogleFonts.inter(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
-            ),
-          ),
+          Text('Create Account', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)),
           const SizedBox(height: 4),
-          Text(
-            'Join CivicConnect and help improve your city.',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.85)),
-          ),
+          Text('Join CivicConnect and make a difference.', style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.85))),
         ],
       ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
     );
   }
 }
