@@ -8,6 +8,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../data/services/media_service.dart';
+import '../../../data/services/storage_service.dart';
 import '../controllers/issue_category_controller.dart';
 import '../widgets/admin_issue_detail_section.dart';
 
@@ -309,36 +311,56 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
   }
 
   Future<void> _submit() async {
-    if (_images.isEmpty) { Get.snackbar('Photo Required', 'Please attach at least one photo.', snackPosition: SnackPosition.BOTTOM); return; }
+    if (_images.isEmpty) {
+      Get.snackbar('Photo Required', 'Please attach at least one photo.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final base = 'resolutions/${widget.issueId}';
-      final photoUrls = await Future.wait(_images.map((img) async {
-        final ref = FirebaseStorage.instance.ref().child('$base/img_${ts}_${_images.indexOf(img)}.jpg');
-        await ref.putFile(File(img.path));
-        return ref.getDownloadURL();
-      }));
-      String? videoUrl;
-      if (_video != null) {
-        final ref = FirebaseStorage.instance.ref().child('$base/video_$ts.mp4');
-        await ref.putFile(_video!);
-        videoUrl = await ref.getDownloadURL();
-      }
-      await FirebaseFirestore.instance.collection('issues').doc(widget.issueId).update({
+
+      // Compress images in parallel
+      final rawImages = _images.map((x) => File(x.path)).toList();
+      final compressedImages = await Future.wait(
+          rawImages.map((f) => MediaService.compressImage(f)));
+
+      // Upload all media in parallel
+      final media = await StorageService.uploadResolutionMedia(
+        issueId: widget.issueId,
+        images: compressedImages,
+        video: _video,
+      );
+
+      // Single Firestore update
+      await FirebaseFirestore.instance
+          .collection('issues')
+          .doc(widget.issueId)
+          .update({
         'status': 'resolved',
         'statusUpdatedAt': FieldValue.serverTimestamp(),
-        'resolution': {'proofImageUrls': photoUrls, 'proofVideoUrl': videoUrl, 'notes': widget.notes, 'resolvedAt': Timestamp.now()},
+        'resolution': {
+          'proofImageUrls': media['photoUrls'],
+          'proofVideoUrl': media['videoUrl'],
+          'notes': widget.notes,
+          'resolvedAt': Timestamp.now(),
+        },
         'timeline': FieldValue.arrayUnion([{
-          'status': 'resolved', 'message': widget.notes,
-          'updatedBy': uid, 'updatedByEmail': widget.adminEmail, 'timestamp': Timestamp.now(),
+          'status': 'resolved',
+          'message': widget.notes,
+          'updatedBy': uid,
+          'updatedByEmail': widget.adminEmail,
+          'timestamp': Timestamp.now(),
         }]),
       });
+
       if (mounted) Navigator.pop(context);
-      Get.snackbar('Resolved', 'Issue marked as resolved.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green.shade100);
+      Get.snackbar('Resolved', 'Issue marked as resolved.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.shade100);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to submit resolution: $e', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error', 'Failed to submit resolution: $e',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
