@@ -331,46 +331,44 @@ class ReportIssueController extends GetxController {
     isSubmitting.value = true;
     uploadProgress.value = 0.1;
 
-    // Navigate to progress screen immediately — citizen sees feedback at once
-    Get.to(() => const UploadProgressPage(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 300));
+    Get.to(
+          () => const UploadProgressPage(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 300),
+    );
 
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not logged in');
 
-      // Compress images in parallel while video compression may still be running
       final imageFiles = selectedImages.map((x) => File(x.path)).toList();
       if (imageFiles.isEmpty && selectedImage.value != null) {
         imageFiles.add(selectedImage.value!);
       }
 
-      // Run image compression + await any pending video compression together
-      final compressionResults = await Future.wait([
-        Future.wait(imageFiles.map((f) => MediaService.compressImage(f))),
+      // Use compute-based parallel compression for images (real isolate parallelism)
+      // Await video compression simultaneously — both run together
+      final results = await Future.wait([
+        MediaService.compressImages(imageFiles),        // isolate per image
         if (_videoCompressionFuture != null) _videoCompressionFuture!,
       ]);
 
-      final compressedImages = (compressionResults[0] as List).cast<File>();
-      final compressedVideo = selectedVideo.value;
+      final compressedImages = (results[0] as List).cast<File>();
 
-      uploadProgress.value = 0.3;
+      uploadProgress.value = 0.35;
 
-      // Pre-allocate doc ID
       final issueRef = _firestore.collection('issues').doc();
 
-      // Upload all media in parallel
+      // Upload all media in parallel — images + audio + video simultaneously
       final mediaUrls = await StorageService.uploadIssueMedia(
         issueId: issueRef.id,
         images: compressedImages,
         audio: selectedAudio.value,
-        video: compressedVideo,
+        video: selectedVideo.value,
       );
 
       uploadProgress.value = 0.85;
 
-      // Single Firestore write with all data
       final ts = Timestamp.now();
       await issueRef.set({
         'id': issueRef.id,
@@ -407,11 +405,10 @@ class ReportIssueController extends GetxController {
       uploadProgress.value = 1.0;
       submitSuccess.value = true;
       isSubmitting.value = false;
-      // Progress page shows success — citizen taps "Back to Dashboard"
     } on FirebaseException catch (e) {
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
-      Get.back(); // dismiss progress page
+      Get.back();
       final msg = e.code == 'permission-denied'
           ? 'Permission denied. Check storage rules.'
           : 'Failed to submit: ${e.message ?? e.code}';
@@ -421,7 +418,7 @@ class ReportIssueController extends GetxController {
     } catch (e) {
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
-      Get.back(); // dismiss progress page
+      Get.back();
       Get.snackbar('Error', 'Failed to submit: $e',
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 3));

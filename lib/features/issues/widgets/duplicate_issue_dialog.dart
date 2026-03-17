@@ -1,9 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
 import '../controllers/report_issue_controller.dart';
 import '../models/duplicate_check_result.dart';
+import '../pages/issue_detail_citizen_page.dart';
 
 class DuplicateIssueDialog extends StatelessWidget {
   final DuplicateCheckResult result;
@@ -14,6 +15,11 @@ class DuplicateIssueDialog extends StatelessWidget {
     final ctrl = Get.find<ReportIssueController>();
     final issue = result.issue;
     final cs = Theme.of(context).colorScheme;
+
+    final currentEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+    final isOriginalReporter = issue.reporterEmail == currentEmail;
+    final alreadyMarkedDuplicate = issue.duplicateReporters.contains(currentEmail);
+
     final dist = result.distanceMeters < 1000
         ? '${result.distanceMeters.toStringAsFixed(0)}m away'
         : '${(result.distanceMeters / 1000).toStringAsFixed(1)}km away';
@@ -26,62 +32,105 @@ class DuplicateIssueDialog extends StatelessWidget {
         const Expanded(child: Text('Similar Issue Found')),
       ]),
       content: SingleChildScrollView(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: cs.surfaceContainerHighest.withOpacity(0.5), borderRadius: BorderRadius.circular(12)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(8)),
-                  child: Text(issue.categoryId.toUpperCase(), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: cs.onPrimaryContainer)),
-                ),
-                const Spacer(),
-                Text(dist, style: GoogleFonts.inter(fontSize: 12, color: Colors.orange.shade700, fontWeight: FontWeight.w600)),
-              ]),
-              const SizedBox(height: 8),
-              Text(issue.description, style: GoogleFonts.inter(fontSize: 13), maxLines: 3, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 8),
-              Row(children: [
-                Icon(Icons.people_outline, size: 14, color: cs.primary),
-                const SizedBox(width: 4),
-                Text('${issue.duplicateReportCount} citizen${issue.duplicateReportCount == 1 ? '' : 's'} reported this',
-                    style: GoogleFonts.inter(fontSize: 12, color: cs.primary, fontWeight: FontWeight.w500)),
-              ]),
-            ]),
-          ),
-          const SizedBox(height: 14),
-          Text('Would you like to report this as a new issue, or mark that you\'ve seen the same problem?',
-              style: GoogleFonts.inter(fontSize: 13, color: cs.onSurfaceVariant)),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        issue.categoryId.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      dist,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.orange.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(
+                    issue.description,
+                    style: GoogleFonts.inter(fontSize: 13),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Icon(Icons.people_outline, size: 14, color: cs.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${issue.duplicateReportCount} citizen${issue.duplicateReportCount == 1 ? '' : 's'} reported this',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: cs.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isOriginalReporter
+                  ? 'You already reported this issue. You can view its current status in My Issues.'
+                  : alreadyMarkedDuplicate
+                  ? 'You have already marked this issue as seen.'
+                  : 'A similar issue has already been reported nearby. You can mark that you\'ve seen this problem too.',
+              style: GoogleFonts.inter(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
-          onPressed: () { ctrl.clearForm(); Get.back(); },
+          onPressed: () {
+            ctrl.clearForm();
+            Get.back();
+          },
           child: const Text('Cancel'),
         ),
-        OutlinedButton(
-          onPressed: () {
-            Get.back();
-            ctrl.markAsDuplicateAndGoBack(
-              existingIssueId: issue.id!,
-              currentCount: issue.duplicateReportCount,
-              currentReporters: issue.duplicateReporters,
-            );
-          },
-          child: const Text("I've Seen This Too"),
-        ),
-        ElevatedButton(
-          onPressed: () async { Get.back(); await ctrl._doSubmitNewAnyway(); },
-          child: const Text('Report Separately'),
-        ),
+        if (!isOriginalReporter && !alreadyMarkedDuplicate)
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              ctrl.markAsDuplicateAndGoBack(
+                existingIssueId: issue.id!,
+                currentCount: issue.duplicateReportCount,
+                currentReporters: issue.duplicateReporters,
+              );
+            },
+            child: const Text("I've Seen This Too"),
+          ),
       ],
     );
   }
 }
 
-// Extension to allow "report anyway" from dialog
 extension ReportIssueControllerExt on ReportIssueController {
   Future<void> _doSubmitNewAnyway() => submitIssue();
 }
