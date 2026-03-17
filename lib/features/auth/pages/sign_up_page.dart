@@ -13,7 +13,9 @@ class SignUpPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.put(SignUpController());
+    final ctrl = Get.isRegistered<SignUpController>()
+        ? Get.find<SignUpController>()
+        : Get.put(SignUpController());
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -58,8 +60,9 @@ class SignUpPage extends StatelessWidget {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(hintText: 'you@example.com', prefixIcon: Icon(Icons.email_outlined)),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email is required';
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) return 'Enter a valid email';
+                          final email = v?.trim() ?? '';
+                          if (email.isEmpty) return 'Email is required';
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) return 'Enter a valid email';
                           return null;
                         },
                       ).animate().fadeIn(delay: 160.ms).slideX(begin: -0.04),

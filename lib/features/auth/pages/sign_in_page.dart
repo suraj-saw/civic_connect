@@ -41,8 +41,9 @@ class SignInPage extends StatelessWidget {
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email is required';
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) return 'Enter a valid email';
+                          final email = v?.trim() ?? '';
+                          if (email.isEmpty) return 'Email is required';
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) return 'Enter a valid email';
                           return null;
                         },
                       ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.04),
