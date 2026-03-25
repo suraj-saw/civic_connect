@@ -6,19 +6,35 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 
 class SignUpController extends GetxController {
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final otpController = TextEditingController();
+  late final TextEditingController nameController;
+  late final TextEditingController phoneController;
+  late final TextEditingController emailController;
+  late final TextEditingController passwordController;
+  late final TextEditingController otpController;
+
   final isPasswordVisible = false.obs;
   final isLoading = false.obs;
 
   String? _verificationId;
 
+  // Cache form data before any auth operation so it survives
+  // controller rebuilds triggered by auth state changes.
+  String _cachedName = '';
+  String _cachedEmail = '';
+  String _cachedPhone = '';
+
+  @override
+  void onInit() {
+    super.onInit();
+    nameController = TextEditingController();
+    phoneController = TextEditingController();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+    otpController = TextEditingController();
+  }
+
   String get formattedPhone => '+91${phoneController.text.trim()}';
 
-  // ── Duplicate phone check (Firestore query) ──────────────────────────────
   Future<bool> _phoneAlreadyExists() async {
     final snap = await FirebaseFirestore.instance
         .collection('users')
@@ -33,12 +49,15 @@ class SignUpController extends GetxController {
     return false;
   }
 
-  // ── Send OTP ─────────────────────────────────────────────────────────────
   Future<void> sendOtp() async {
     isLoading.value = true;
     try {
-      // No longer swallowing permission-denied — rules now allow this query
       if (await _phoneAlreadyExists()) return;
+
+      // Cache values now before navigation clears them
+      _cachedName = nameController.text.trim();
+      _cachedEmail = emailController.text.trim();
+      _cachedPhone = formattedPhone;
 
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: formattedPhone,
@@ -63,7 +82,6 @@ class SignUpController extends GetxController {
     }
   }
 
-  // ── Verify OTP & create account ──────────────────────────────────────────
   Future<void> verifyOtp() async {
     if (_verificationId == null) {
       Get.snackbar('Error', 'OTP session expired. Please go back and retry.');
@@ -74,67 +92,139 @@ class SignUpController extends GetxController {
     UserCredential? emailUserCred;
 
     try {
-      // 1. Build phone credential (no sign-in yet)
       final phoneCredential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otpController.text.trim(),
       );
 
-      // 2. Create the email/password account first → stable UID
-      emailUserCred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      // Step 1: Create email/password account
+      emailUserCred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       final user = emailUserCred.user!;
+      final uid = user.uid;
 
-      // 3. Link the verified phone credential to this account
+      // Step 2: Link phone — this may briefly fire sign-out/sign-in
+      // auth state events. Capture all needed data before this call.
       await user.linkWithCredential(phoneCredential);
 
-      // 4. Write Firestore profile
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'name': nameController.text.trim(),
-        'email': emailController.text.trim(),
-        'phone': formattedPhone,
-        'phoneVerified': true,
-        'role': 'citizen',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Step 3: Wait for auth state to fully settle and token to propagate
+      await _waitForAuthToSettle(uid);
+
+      // Step 4: Write Firestore using cached values (controllers may be
+      // stale if auth state change triggered a rebuild)
+      await _writeUserProfile(uid);
 
       Get.snackbar('Success', 'Account created successfully!');
       Get.offAllNamed(AppRoutes.signIn);
     } on FirebaseAuthException catch (e) {
-      // If email account was created but linking/Firestore failed, delete it
-      // to avoid orphaned auth records
       if (emailUserCred != null) {
         try { await emailUserCred.user?.delete(); } catch (_) {}
       }
-
-      final msg = switch (e.code) {
-        'email-already-in-use' => 'Email already registered. Use another.',
-        'invalid-verification-code' => 'Invalid OTP. Please try again.',
-        'credential-already-in-use' =>
-        'Phone number already registered. Use another.',
-        _ => e.message ?? 'Verification failed',
-      };
-      Get.snackbar('Error', msg);
-    } on FirebaseException catch (e) {
+      Get.snackbar('Error', _authErrorMessage(e.code, e.message));
+    } catch (e) {
       if (emailUserCred != null) {
         try { await emailUserCred.user?.delete(); } catch (_) {}
       }
-      Get.snackbar('Error', e.message ?? 'Failed to save profile');
+      Get.snackbar('Error', 'Verification failed. Please try again.');
     } finally {
       isLoading.value = false;
     }
   }
 
+  /// Waits until Firebase Auth confirms the correct user is signed in
+  /// and their token is valid. Retries up to 5 seconds.
+  Future<void> _waitForAuthToSettle(String expectedUid) async {
+    const maxWait = Duration(seconds: 5);
+    const interval = Duration(milliseconds: 300);
+    final deadline = DateTime.now().add(maxWait);
+
+    while (DateTime.now().isBefore(deadline)) {
+      final current = FirebaseAuth.instance.currentUser;
+      if (current != null && current.uid == expectedUid) {
+        // Force token refresh to ensure Firestore rules see valid auth
+        try {
+          await current.getIdToken(true);
+          return;
+        } catch (_) {}
+      }
+      await Future.delayed(interval);
+    }
+
+    // Final attempt even if uid didn't match
+    final current = FirebaseAuth.instance.currentUser;
+    if (current != null) {
+      try { await current.getIdToken(true); } catch (_) {}
+    }
+  }
+
+  Future<void> _writeUserProfile(String uid) async {
+    const maxRetries = 3;
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Verify auth is still valid before each attempt
+        final current = FirebaseAuth.instance.currentUser;
+        if (current == null) {
+          throw FirebaseException(
+            plugin: 'firestore',
+            code: 'unauthenticated',
+            message: 'User session lost during profile creation.',
+          );
+        }
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({
+          'name': _cachedName,
+          'email': _cachedEmail,
+          'phone': _cachedPhone,
+          'phoneVerified': true,
+          'role': 'citizen',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return; // success — exit
+      } on FirebaseException catch (e) {
+        final isLastAttempt = attempt == maxRetries;
+        if (e.code == 'permission-denied' && !isLastAttempt) {
+          // Token hasn't propagated to Firestore yet — wait and retry
+          await Future.delayed(Duration(milliseconds: 600 * attempt));
+          try {
+            await FirebaseAuth.instance.currentUser?.getIdToken(true);
+          } catch (_) {}
+          continue;
+        }
+        rethrow;
+      }
+    }
+  }
+
+  String _authErrorMessage(String code, String? message) {
+    return switch (code) {
+      'email-already-in-use' => 'Email already registered. Use another.',
+      'invalid-verification-code' => 'Invalid OTP. Please try again.',
+      'credential-already-in-use' =>
+      'Phone number already registered. Use another.',
+      _ => message ?? 'Verification failed',
+    };
+  }
+
   void clearFields() {
-    isPasswordVisible.value = false;
-    nameController.clear();
-    phoneController.clear();
-    emailController.clear();
-    passwordController.clear();
-    otpController.clear();
+    try {
+      nameController.clear();
+      phoneController.clear();
+      emailController.clear();
+      passwordController.clear();
+      otpController.clear();
+      isPasswordVisible.value = false;
+      _cachedName = '';
+      _cachedEmail = '';
+      _cachedPhone = '';
+    } catch (_) {}
   }
 
   @override

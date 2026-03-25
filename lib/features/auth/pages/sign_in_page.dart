@@ -7,15 +7,25 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/sign_in_controller.dart';
 import '../../../core/routes/app_routes.dart';
 
-class SignInPage extends StatelessWidget {
+class SignInPage extends StatefulWidget {
   SignInPage({super.key});
+
+  @override
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
   final _formKey = GlobalKey<FormState>();
+  final _ctrl = SignInController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.isRegistered<SignInController>()
-        ? Get.find<SignInController>()
-        : Get.put(SignInController());
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -25,7 +35,8 @@ class SignInPage extends StatelessWidget {
             children: [
               _HeroHeader(cs: cs).animate().fadeIn(duration: 500.ms),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 32),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -34,7 +45,7 @@ class SignInPage extends StatelessWidget {
                       _FieldLabel('Email'),
                       const SizedBox(height: 6),
                       TextFormField(
-                        controller: ctrl.emailController,
+                        controller: _ctrl.emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           hintText: 'you@example.com',
@@ -43,7 +54,10 @@ class SignInPage extends StatelessWidget {
                         validator: (v) {
                           final email = v?.trim() ?? '';
                           if (email.isEmpty) return 'Email is required';
-                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) return 'Enter a valid email';
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(email)) {
+                            return 'Enter a valid email';
+                          }
                           return null;
                         },
                       ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.04),
@@ -51,29 +65,49 @@ class SignInPage extends StatelessWidget {
                       _FieldLabel('Password'),
                       const SizedBox(height: 6),
                       Obx(() => TextFormField(
-                        controller: ctrl.passwordController,
-                        obscureText: !ctrl.isPasswordVisible.value,
+                        controller: _ctrl.passwordController,
+                        obscureText: !_ctrl.isPasswordVisible.value,
                         decoration: InputDecoration(
                           hintText: '••••••••',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
-                            icon: Icon(ctrl.isPasswordVisible.value
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
-                            onPressed: () => ctrl.isPasswordVisible.toggle(),
+                            icon: Icon(
+                              _ctrl.isPasswordVisible.value
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            onPressed: () =>
+                                _ctrl.isPasswordVisible.toggle(),
                           ),
                         ),
-                        validator: (v) => v == null || v.isEmpty ? 'Password is required' : null,
-                      )).animate().fadeIn(delay: 150.ms).slideX(begin: -0.04),
+                        validator: (v) => v == null || v.isEmpty
+                            ? 'Password is required'
+                            : null,
+                      ))
+                          .animate()
+                          .fadeIn(delay: 150.ms)
+                          .slideX(begin: -0.04),
                       const SizedBox(height: 32),
                       Obx(() => SizedBox(
                         height: 54,
                         child: ElevatedButton(
-                          onPressed: ctrl.isLoading.value
+                          onPressed: _ctrl.isLoading.value
                               ? null
-                              : () { if (_formKey.currentState!.validate()) ctrl.signIn(); },
-                          child: ctrl.isLoading.value
-                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                              : () {
+                            if (_formKey.currentState!
+                                .validate()) {
+                              _ctrl.signIn();
+                            }
+                          },
+                          child: _ctrl.isLoading.value
+                              ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
                               : const Text('Sign In'),
                         ),
                       )).animate().fadeIn(delay: 200.ms),
@@ -81,13 +115,19 @@ class SignInPage extends StatelessWidget {
                       Center(
                         child: RichText(
                           text: TextSpan(
-                            style: GoogleFonts.inter(fontSize: 14, color: cs.onSurface),
+                            style: GoogleFonts.inter(
+                                fontSize: 14, color: cs.onSurface),
                             text: "Don't have an account? ",
                             children: [
                               TextSpan(
                                 text: 'Sign Up',
-                                style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700),
-                                recognizer: TapGestureRecognizer()..onTap = () => Get.toNamed(AppRoutes.signUp),
+                                style: TextStyle(
+                                  color: cs.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () =>
+                                      Get.toNamed(AppRoutes.signUp),
                               ),
                             ],
                           ),
@@ -108,6 +148,7 @@ class SignInPage extends StatelessWidget {
 class _HeroHeader extends StatelessWidget {
   final ColorScheme cs;
   const _HeroHeader({required this.cs});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -115,23 +156,45 @@ class _HeroHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 56, 24, 44),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [cs.primary, Color.lerp(cs.primary, cs.tertiary, 0.35)!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.primary,
+            Color.lerp(cs.primary, cs.tertiary, 0.35)!,
+          ],
         ),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+        borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(36)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.location_city_rounded, color: Colors.white, size: 32),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.location_city_rounded,
+                color: Colors.white, size: 32),
           ),
           const SizedBox(height: 20),
-          Text('CivicConnect', style: GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+          Text(
+            'CivicConnect',
+            style: GoogleFonts.inter(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Welcome back! Sign in to continue.', style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.85))),
+          Text(
+            'Welcome back! Sign in to continue.',
+            style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.85)),
+          ),
         ],
       ),
     );
@@ -141,6 +204,11 @@ class _HeroHeader extends StatelessWidget {
 class _FieldLabel extends StatelessWidget {
   final String text;
   const _FieldLabel(this.text);
+
   @override
-  Widget build(BuildContext context) => Text(text, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: GoogleFonts.inter(
+        fontWeight: FontWeight.w600, fontSize: 13),
+  );
 }

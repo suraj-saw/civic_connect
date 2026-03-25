@@ -19,44 +19,48 @@ class RootPage extends StatefulWidget {
 }
 
 class _RootPageState extends State<RootPage> {
-  // Cache the resolved role per uid to avoid re-fetching on every rebuild.
   String? _cachedUid;
   String? _cachedRole;
   bool _fetchingRole = false;
+
+  // Tracks whether we're in the middle of a sign-up flow.
+  // During sign-up, auth state flickers — we must not react to it.
+  bool get _isOnSignUpFlow {
+    final route = Get.currentRoute;
+    return route == '/signUp' || route == '/verifyOtp';
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
-        // While waiting for Firebase to initialize, show a loader.
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const _Loader();
         }
 
         final user = authSnapshot.data;
 
-        // Not logged in → show sign-in.
         if (user == null) {
+          // If we're mid sign-up, don't react to the transient sign-out
+          if (_isOnSignUpFlow) return const _Loader();
+
           _cleanupControllers();
           _cachedUid = null;
           _cachedRole = null;
           return SignInPage();
         }
 
-        // Same user, role already resolved → go straight to home.
         if (_cachedUid == user.uid && _cachedRole != null) {
           return _homeForRole(_cachedRole!);
         }
 
-        // New uid — fetch role once.
         if (!_fetchingRole || _cachedUid != user.uid) {
           _fetchingRole = true;
           _cachedUid = user.uid;
           _fetchRole(user.uid);
         }
 
-        // Show loader while fetching role.
         return const _Loader();
       },
     );
@@ -70,14 +74,17 @@ class _RootPageState extends State<RootPage> {
           .get();
 
       if (!doc.exists || doc.data() == null) {
-        // Firestore doc missing — sign out cleanly.
+        // Doc may not exist yet during sign-up — don't sign out
+        if (_isOnSignUpFlow) {
+          if (mounted) setState(() => _fetchingRole = false);
+          return;
+        }
         await FirebaseAuth.instance.signOut();
         _cleanupControllers();
         return;
       }
 
       final role = doc.data()!['role'] as String? ?? 'citizen';
-
       if (mounted) {
         setState(() {
           _cachedRole = role;
@@ -85,11 +92,7 @@ class _RootPageState extends State<RootPage> {
         });
       }
     } catch (e) {
-      // Network or permission error — do NOT sign the user out.
-      // Just retry on the next build triggered by auth state.
-      if (mounted) {
-        setState(() { _fetchingRole = false; });
-      }
+      if (mounted) setState(() => _fetchingRole = false);
     }
   }
 

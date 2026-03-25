@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
 import '../../core/routes/app_routes.dart';
-import '../../features/auth/controllers/sign_in_controller.dart';
 import '../../features/home/controllers/home_admin_controller.dart';
 import '../../features/home/controllers/home_citizen_controller.dart';
 import '../../features/issues/controllers/issue_category_controller.dart';
@@ -21,7 +20,8 @@ class AuthRepository {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) return null;
-      final doc = await _firestore.collection('users').doc(user.uid).get();
+      final doc =
+      await _firestore.collection('users').doc(user.uid).get();
       return doc.data()?['role'] as String?;
     } catch (_) {
       return null;
@@ -32,46 +32,44 @@ class AuthRepository {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) return null;
-      final doc = await _firestore.collection('users').doc(user.uid).get();
+      final doc =
+      await _firestore.collection('users').doc(user.uid).get();
       return doc.data();
     } catch (_) {
       return null;
     }
   }
 
-  /// Signs the user out, cleans up all controllers, then navigates to sign-in.
   Future<void> signOut() async {
     try {
-      // 1. Cancel Firestore streams by deleting controllers BEFORE signing out
-      if (Get.isRegistered<MyIssuesController>()) {
-        Get.delete<MyIssuesController>(force: true);
-      }
-      if (Get.isRegistered<NotificationController>()) {
-        Get.delete<NotificationController>(force: true);
-      }
+      _deleteControllerSafely<MyIssuesController>();
+      _deleteControllerSafely<NotificationController>();
+
       if (Get.isRegistered<HomeCitizenController>()) {
-        try { Get.find<HomeCitizenController>().resetToDashboard(); } catch (_) {}
+        try {
+          Get.find<HomeCitizenController>().resetToDashboard();
+        } catch (_) {}
         Get.delete<HomeCitizenController>(force: true);
       }
-      if (Get.isRegistered<HomeAdminController>()) {
-        Get.delete<HomeAdminController>(force: true);
-      }
-      if (Get.isRegistered<IssueCategoryController>()) {
-        Get.delete<IssueCategoryController>(force: true);
-      }
-      if (Get.isRegistered<SignInController>()) {
-        try { Get.find<SignInController>().clearFields(); } catch (_) {}
-      }
 
-      // 2. Sign out from Firebase
+      _deleteControllerSafely<HomeAdminController>();
+      _deleteControllerSafely<IssueCategoryController>();
+
       await _firebaseAuth.signOut();
-
-      // 3. Navigate to sign-in, clearing the entire navigation stack
       Get.offAllNamed(AppRoutes.signIn);
     } catch (e) {
-      // Even if something fails, still attempt navigation
-      try { Get.offAllNamed(AppRoutes.signIn); } catch (_) {}
+      try {
+        Get.offAllNamed(AppRoutes.signIn);
+      } catch (_) {}
       rethrow;
+    }
+  }
+
+  void _deleteControllerSafely<T>() {
+    if (Get.isRegistered<T>()) {
+      try {
+        Get.delete<T>(force: true);
+      } catch (_) {}
     }
   }
 
