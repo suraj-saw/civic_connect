@@ -100,13 +100,15 @@ class VerifyOtpPage extends StatelessWidget {
                       ),
                     ).animate().fadeIn(delay: 250.ms),
                     const SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'Resend OTP',
-                        style: TextStyle(
-                          color: cs.primary,
-                          fontWeight: FontWeight.w600,
+                    Obx(
+                      () => TextButton(
+                        onPressed: ctrl.isLoading.value ? null : ctrl.resendOtp,
+                        child: Text(
+                          'Resend OTP',
+                          style: TextStyle(
+                            color: cs.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ).animate().fadeIn(delay: 300.ms),

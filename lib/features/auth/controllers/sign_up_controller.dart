@@ -22,6 +22,7 @@ class SignUpController extends GetxController {
   String _cachedName = '';
   String _cachedEmail = '';
   String _cachedPhone = '';
+  String _cachedPassword = '';
 
   @override
   void onInit() {
@@ -58,6 +59,7 @@ class SignUpController extends GetxController {
       _cachedName = nameController.text.trim();
       _cachedEmail = emailController.text.trim();
       _cachedPhone = formattedPhone;
+      _cachedPassword = passwordController.text.trim();
 
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: formattedPhone,
@@ -88,6 +90,11 @@ class SignUpController extends GetxController {
       return;
     }
 
+    if (otpController.text.trim().length != 6) {
+      Get.snackbar('Error', 'Enter a valid 6-digit OTP.');
+      return;
+    }
+
     isLoading.value = true;
     UserCredential? emailUserCred;
 
@@ -100,8 +107,8 @@ class SignUpController extends GetxController {
       // Step 1: Create email/password account
       emailUserCred = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: _cachedEmail,
+        password: _cachedPassword,
       );
 
       final user = emailUserCred.user!;
@@ -130,6 +137,38 @@ class SignUpController extends GetxController {
         try { await emailUserCred.user?.delete(); } catch (_) {}
       }
       Get.snackbar('Error', 'Verification failed. Please try again.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> resendOtp() async {
+    if (_cachedPhone.isEmpty) {
+      Get.snackbar('Error', 'Phone number not found. Go back and try again.');
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: _cachedPhone,
+        verificationCompleted: (_) {},
+        verificationFailed: (e) {
+          Get.snackbar('Error', e.message ?? 'OTP resend failed');
+        },
+        codeSent: (verificationId, _) {
+          _verificationId = verificationId;
+          otpController.clear();
+          Get.snackbar('OTP Sent', 'A new OTP has been sent to your phone.');
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar('Error', e.message ?? 'Unable to resend OTP');
+    } on FirebaseException catch (e) {
+      Get.snackbar('Error', e.message ?? 'Unable to resend OTP');
     } finally {
       isLoading.value = false;
     }
@@ -224,6 +263,7 @@ class SignUpController extends GetxController {
       _cachedName = '';
       _cachedEmail = '';
       _cachedPhone = '';
+      _cachedPassword = '';
     } catch (_) {}
   }
 
