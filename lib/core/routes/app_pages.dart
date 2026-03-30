@@ -1,6 +1,7 @@
 import 'package:civic_connect/features/auth/pages/sign_in_page.dart';
 import 'package:civic_connect/features/auth/pages/sign_up_page.dart';
 import 'package:civic_connect/features/auth/pages/verify_otp_page.dart';
+import 'package:civic_connect/features/auth/pages/forgot_password_page.dart';
 import 'package:civic_connect/features/auth/bindings/auth_binding.dart';
 import 'package:civic_connect/features/home/pages/home_citizen_page.dart';
 import 'package:civic_connect/features/home/bindings/home_binding.dart';
@@ -31,6 +32,12 @@ class AppPages {
       page: () => const VerifyOtpPage(),
       binding: AuthBinding(),
       transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordPage(),
+      binding: AuthBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: AppRoutes.homeCitizen,

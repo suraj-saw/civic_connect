@@ -87,7 +87,32 @@ class _SignInPageState extends State<SignInPage> {
                           .animate()
                           .fadeIn(delay: 150.ms)
                           .slideX(begin: -0.04),
-                      const SizedBox(height: 32),
+
+                      // ── Forgot Password link ──────────────────────────
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () =>
+                              Get.toNamed(AppRoutes.forgotPassword),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: cs.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 170.ms),
+                      // ─────────────────────────────────────────────────
+
+                      const SizedBox(height: 20),
                       Obx(() => SizedBox(
                         height: 54,
                         child: ElevatedButton(
