@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../home/controllers/home_admin_controller.dart';
 import '../../home/controllers/home_citizen_controller.dart';
 import '../../issues/controllers/issue_category_controller.dart';
@@ -34,14 +33,13 @@ class _RootPageState extends State<RootPage> {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
-          return const _Loader();
+          return const _BlankScreen();
         }
 
         final user = authSnapshot.data;
 
         if (user == null) {
-          if (_isOnSignUpFlow) return const _Loader();
-
+          if (_isOnSignUpFlow) return const _BlankScreen();
           _cleanupControllers();
           _cachedUid = null;
           _cachedRole = null;
@@ -58,7 +56,8 @@ class _RootPageState extends State<RootPage> {
           _fetchRole(user.uid);
         }
 
-        return const _Loader();
+        // Show blank instead of spinner — splash already handled loading
+        return const _BlankScreen();
       },
     );
   }
@@ -113,13 +112,11 @@ class _RootPageState extends State<RootPage> {
   }
 }
 
-class _Loader extends StatelessWidget {
-  const _Loader();
+class _BlankScreen extends StatelessWidget {
+  const _BlankScreen();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return Scaffold(backgroundColor: Theme.of(context).colorScheme.surface);
   }
 }

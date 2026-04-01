@@ -1,9 +1,12 @@
 import 'dart:async';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-
+import '../../auth/pages/sign_in_page.dart';
+import '../../home/pages/home_admin.dart';
+import '../../home/pages/home_citizen_page.dart';
 import '../../root/pages/root_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -14,27 +17,48 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1400), _openRoot);
+    _init();
   }
 
-  void _openRoot() {
+  Future<void> _init() async {
+    // Run splash delay and role fetch in parallel
+    final results = await Future.wait([
+      Future.delayed(const Duration(milliseconds: 1600)),
+      _resolveDestination(),
+    ]);
+
     if (!mounted) return;
+
+    final Widget destination = results[1] as Widget;
     Get.off(
-          () => const RootPage(),
+          () => destination,
       transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 300),
     );
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  Future<Widget> _resolveDestination() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return SignInPage();
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 5));
+
+      if (!doc.exists || doc.data() == null) return SignInPage();
+
+      final role = doc.data()!['role'] as String? ?? 'citizen';
+      if (role == 'admin') return const HomeAdminPage();
+      return const HomeCitizenPage();
+    } catch (_) {
+      return const RootPage();
+    }
   }
 
   @override
@@ -69,7 +93,8 @@ class _SplashPageState extends State<SplashPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: cs.primaryContainer.withOpacity(0.6),
-                    border: Border.all(color: cs.primary.withOpacity(0.25)),
+                    border: Border.all(
+                        color: cs.primary.withOpacity(0.25)),
                   ),
                   child: Icon(
                     Icons.location_city_rounded,
@@ -78,7 +103,9 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                 )
                     .animate()
-                    .scale(duration: 650.ms, curve: Curves.easeOutBack)
+                    .scale(
+                    duration: 650.ms,
+                    curve: Curves.easeOutBack)
                     .fadeIn(duration: 400.ms),
                 const SizedBox(height: 18),
                 Text(
