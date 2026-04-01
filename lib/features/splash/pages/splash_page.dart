@@ -1,10 +1,16 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 
-import '../../root/pages/root_page.dart';
+import '../../auth/pages/sign_in_page.dart';
+import '../../home/pages/home_admin.dart';
+import '../../home/pages/home_citizen_page.dart';
+import '../../../firebase_options.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -14,26 +20,60 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1400), _openRoot);
+    _bootstrap();
   }
 
-  void _openRoot() {
+  Future<void> _bootstrap() async {
+    final result = await Future.wait<dynamic>([
+      _resolveInitialPage(),
+      Future<void>.delayed(const Duration(milliseconds: 1400)),
+    ]);
+
     if (!mounted) return;
-    Get.off(
-          () => const RootPage(),
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 250),
+
+    final nextPage = result.first as Widget;
+    Get.offAll(
+      () => nextPage,
+      transition: Transition.noTransition,
     );
+  }
+
+  Future<Widget> _resolveInitialPage() async {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return SignInPage();
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!doc.exists || doc.data() == null) {
+        await FirebaseAuth.instance.signOut();
+        return SignInPage();
+      }
+
+      final role = doc.data()!['role'] as String? ?? 'citizen';
+      if (role == 'admin') return const HomeAdminPage();
+      return const HomeCitizenPage();
+    } catch (_) {
+      return SignInPage();
+    }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     super.dispose();
   }
 
@@ -44,6 +84,7 @@ class _SplashPageState extends State<SplashPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
+      backgroundColor: cs.surface,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -96,6 +137,15 @@ class _SplashPageState extends State<SplashPage> {
                     fontWeight: FontWeight.w500,
                   ),
                 ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.6,
+                    valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                  ),
+                ).animate().fadeIn(delay: 350.ms, duration: 350.ms),
               ],
             ),
           ),
