@@ -1,4 +1,4 @@
 class IssueConstants {
-  static const double duplicateMinimumRadiusInMeters = 100.0;
-  static const int duplicateLookupLimit = 50;
+  static const double duplicateMinimumRadiusInMeters = 40.0;
+  static const int duplicateLookupLimit = 100;
 }

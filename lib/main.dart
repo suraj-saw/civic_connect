@@ -1,4 +1,4 @@
-import 'package:civic_connect/features/root/pages/root_page.dart';
+import 'package:civic_connect/features/splash/pages/splash_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeCtrl.isDark.value ? ThemeMode.dark : ThemeMode.light,
       theme: TAppTheme.light(seedColor: const Color(0xFF1565C0)),
       darkTheme: TAppTheme.dark(seedColor: const Color(0xFF1565C0)),
-      home: const RootPage(),
+      home: const SplashPage(),
       getPages: AppPages.pages,
     ));
   }
