@@ -14,7 +14,7 @@ class MapPage extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(color: cs.primaryContainer.withOpacity(0.5), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.5), shape: BoxShape.circle),
             child: Icon(Icons.map_rounded, size: 56, color: cs.primary),
           ).animate().scale(begin: const Offset(0.8, 0.8)).fadeIn(),
           const SizedBox(height: 20),

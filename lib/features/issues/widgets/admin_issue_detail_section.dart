@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -151,8 +152,15 @@ class AdminIssueMediaSection extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: AspectRatio(aspectRatio: 16 / 9,
-                    child: Image.network(images[0], fit: BoxFit.cover,
-                        loadingBuilder: (_, child, p) => p == null ? child : Container(color: cs.surfaceContainerHighest))),
+                    child: CachedNetworkImage(
+                      imageUrl: images[0],
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
+                      errorWidget: (_, __, ___) => Container(
+                        color: cs.surfaceContainerHighest,
+                        child: Icon(Icons.image_not_supported_outlined, color: cs.onSurfaceVariant),
+                      ),
+                    )),
               ),
             ),
             if (images.length > 1) ...[
@@ -164,8 +172,20 @@ class AdminIssueMediaSection extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(width: 6),
                   itemBuilder: (_, i) => GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullscreenImagePage(imageUrls: images, initialIndex: i + 1))),
-                    child: ClipRRect(borderRadius: BorderRadius.circular(8),
-                        child: Image.network(images[i + 1], width: 60, height: 60, fit: BoxFit.cover)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: CachedNetworkImage(
+                        imageUrl: images[i + 1],
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
+                        errorWidget: (_, __, ___) => Container(
+                          color: cs.surfaceContainerHighest,
+                          child: Icon(Icons.broken_image_outlined, size: 16, color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../controllers/feedback_controller.dart';
 import '../models/citizen_model_feedback.dart';
 import 'reopen_section.dart';
@@ -44,9 +45,10 @@ class _SubmittedCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      constraints: const BoxConstraints(minHeight: AppDimensions.actionCardMinHeight),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.green.shade50, borderRadius: BorderRadius.circular(16),
+        color: Colors.green.shade50, borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: Colors.green.shade200),
       ),
       child: Column(
@@ -103,9 +105,10 @@ class _FeedbackForm extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      constraints: const BoxConstraints(minHeight: AppDimensions.actionCardMinHeight),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        color: cs.surface, borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: cs.primary.withOpacity(0.2)),
       ),
       child: Column(

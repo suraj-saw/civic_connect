@@ -30,13 +30,11 @@ class HomeAdminController extends GetxController {
   /// UI-ready filtered + sorted list
   final filteredIssues = <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
 
-  /// Search + filters
+  /// Search + filters (category removed)
   final searchQuery = ''.obs;
-  final selectedCategory = 'all'.obs;
   final selectedStatus = 'all'.obs;
   final selectedSort = AdminIssueSortOption.newestFirst.obs;
 
-  final availableCategories = <String>[].obs;
   final availableStatuses = <String>[].obs;
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _issuesSub;
@@ -99,7 +97,7 @@ class HomeAdminController extends GetxController {
         .snapshots()
         .listen((snapshot) {
       assignedIssues.assignAll(snapshot.docs);
-      _rebuildFilterMeta();
+      _rebuildStatusMeta();
       applyFilters();
       isIssuesLoading.value = false;
     }, onError: (_) {
@@ -107,46 +105,30 @@ class HomeAdminController extends GetxController {
     });
   }
 
-  void _rebuildFilterMeta() {
-    final categories = <String>{};
+  void _rebuildStatusMeta() {
     final statuses = <String>{};
 
     for (final doc in assignedIssues) {
       final data = doc.data();
-      final category = (data['categoryId'] ?? '').toString().trim();
       final status = (data['status'] ?? '').toString().trim().toLowerCase();
-
-      if (category.isNotEmpty) categories.add(category);
       if (status.isNotEmpty) statuses.add(status);
     }
 
-    final categoryList = categories.toList()..sort();
     final statusList = statuses.toList()..sort();
-
-    availableCategories
-      ..clear()
-      ..addAll(['all', ...categoryList]);
 
     availableStatuses
       ..clear()
       ..addAll(['all', ...statusList]);
 
-    // Guard selected values if currently invalid
-    if (!availableCategories.contains(selectedCategory.value)) {
-      selectedCategory.value = 'all';
-    }
+    // Guard selected value if currently invalid
     if (!availableStatuses.contains(selectedStatus.value)) {
       selectedStatus.value = 'all';
     }
   }
 
   void updateSearchQuery(String value) {
-    searchQuery.value = value.trim();
-    applyFilters();
-  }
-
-  void updateCategory(String value) {
-    selectedCategory.value = value;
+    // Store raw value — don't trim on every keystroke (trim only at filter time)
+    searchQuery.value = value;
     applyFilters();
   }
 
@@ -162,15 +144,19 @@ class HomeAdminController extends GetxController {
 
   void clearFilters() {
     searchQuery.value = '';
-    selectedCategory.value = 'all';
     selectedStatus.value = 'all';
     selectedSort.value = AdminIssueSortOption.newestFirst;
     applyFilters();
   }
 
+  /// Whether any non-default filter is active (used for UI badge)
+  bool get hasActiveFilters =>
+      searchQuery.value.trim().isNotEmpty ||
+      selectedStatus.value != 'all' ||
+      selectedSort.value != AdminIssueSortOption.newestFirst;
+
   void applyFilters() {
-    final q = searchQuery.value.toLowerCase();
-    final category = selectedCategory.value;
+    final q = searchQuery.value.trim().toLowerCase();
     final status = selectedStatus.value;
     final sortOption = selectedSort.value;
 
@@ -178,23 +164,24 @@ class HomeAdminController extends GetxController {
       final data = doc.data();
       final issueId = (data['id'] ?? doc.id).toString().toLowerCase();
       final description = (data['description'] ?? '').toString().toLowerCase();
-      final categoryId = (data['categoryId'] ?? '').toString();
+      final categoryId = (data['categoryId'] ?? '').toString().toLowerCase();
       final statusValue = (data['status'] ?? '').toString().toLowerCase();
-      final reporterEmail = (data['reporterEmail'] ?? '').toString().toLowerCase();
-
-      // Category filter
-      if (category != 'all' && categoryId != category) return false;
+      final reporterEmail =
+          (data['reporterEmail'] ?? '').toString().toLowerCase();
+      final location =
+          (data['locationName'] ?? data['address'] ?? '').toString().toLowerCase();
 
       // Status filter
       if (status != 'all' && statusValue != status) return false;
 
-      // Keyword search
+      // Keyword search — matches across multiple fields
       if (q.isNotEmpty) {
         final matches = issueId.contains(q) ||
             description.contains(q) ||
-            categoryId.toLowerCase().contains(q) ||
+            categoryId.contains(q) ||
             statusValue.contains(q) ||
-            reporterEmail.contains(q);
+            reporterEmail.contains(q) ||
+            location.contains(q);
         if (!matches) return false;
       }
 

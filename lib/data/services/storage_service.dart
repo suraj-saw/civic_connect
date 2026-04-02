@@ -58,7 +58,12 @@ class StorageService {
   static Future<String> _upload(File file, String path) async {
     final ref = _storage.ref().child(path);
     final snap = await ref.putFile(
-        file, SettableMetadata(contentType: _contentType(file)));
+      file,
+      SettableMetadata(
+        contentType: _contentType(file),
+        cacheControl: 'public,max-age=31536000',
+      ),
+    );
     return snap.ref.getDownloadURL();
   }
 

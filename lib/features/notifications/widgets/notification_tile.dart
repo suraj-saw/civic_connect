@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_colors.dart';
 import '../models/notification_item.dart';
 
@@ -16,14 +17,15 @@ class NotificationTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
+      constraints: const BoxConstraints(minHeight: AppDimensions.notificationCardMinHeight),
       decoration: BoxDecoration(
         color: isUnread ? cs.primaryContainer.withOpacity(0.25) : cs.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: isUnread ? cs.primary.withOpacity(0.2) : cs.outline.withOpacity(0.1)),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(

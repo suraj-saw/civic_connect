@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -268,8 +269,20 @@ class _ResolutionProofSection extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal, itemCount: imageUrls.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) => ClipRRect(borderRadius: BorderRadius.circular(10),
-                    child: Image.network(imageUrls[i], width: 80, height: 80, fit: BoxFit.cover)),
+                itemBuilder: (_, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrls[i],
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
+                    errorWidget: (_, __, ___) => Container(
+                      color: cs.surfaceContainerHighest,
+                      child: Icon(Icons.broken_image_outlined, size: 18, color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

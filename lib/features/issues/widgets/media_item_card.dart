@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_dimensions.dart';
 
 class MediaItemCard extends StatelessWidget {
   final String label;
@@ -11,10 +12,11 @@ class MediaItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
+      constraints: const BoxConstraints(minHeight: AppDimensions.compactCardMinHeight),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: cs.primary.withOpacity(0.3)),
       ),
       child: Row(

@@ -14,6 +14,8 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
@@ -51,7 +53,7 @@ class _SplashPageState extends State<SplashPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              cs.primary.withOpacity(0.12),
+              cs.primary.withValues(alpha: 0.12),
               cs.surface,
               cs.surface,
             ],
@@ -67,9 +69,9 @@ class _SplashPageState extends State<SplashPage> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: cs.primaryContainer.withOpacity(0.6),
+                    color: cs.primaryContainer.withValues(alpha: 0.6),
                     border: Border.all(
-                        color: cs.primary.withOpacity(0.25)),
+                        color: cs.primary.withValues(alpha: 0.25)),
                   ),
                   child: Icon(
                     Icons.location_city_rounded,

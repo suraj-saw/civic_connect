@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class FullscreenImagePage extends StatefulWidget {
   final List<String> imageUrls;
@@ -42,9 +43,12 @@ class _FullscreenImagePageState extends State<FullscreenImagePage> {
             itemBuilder: (_, i) => InteractiveViewer(
               minScale: 0.8, maxScale: 4.0,
               child: Center(
-                child: Image.network(widget.imageUrls[i], fit: BoxFit.contain,
-                    loadingBuilder: (_, child, p) => p == null ? child
-                        : const Center(child: CircularProgressIndicator(color: Colors.white))),
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrls[i],
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                  errorWidget: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 36),
+                ),
               ),
             ),
           ),

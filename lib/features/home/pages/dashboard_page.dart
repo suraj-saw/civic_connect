@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../../issues/controllers/my_issues_controller.dart';
 import '../controllers/home_citizen_controller.dart';
 
@@ -29,7 +30,7 @@ class DashboardPage extends StatelessWidget {
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(22),
-              boxShadow: [BoxShadow(color: cs.primary.withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 8))],
+              boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 8))],
             ),
             child: Row(
               children: [
@@ -39,13 +40,13 @@ class DashboardPage extends StatelessWidget {
                     children: [
                       Text('Good to see you 👋', style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
-                      Text('Help make your city better.', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.85), fontSize: 13)),
+                      Text('Help make your city better.', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.85), fontSize: 13)),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
                   child: const Icon(Icons.location_city_rounded, color: Colors.white, size: 28),
                 ),
               ],
@@ -123,10 +124,11 @@ class _ActionCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
+          constraints: const BoxConstraints(minHeight: AppDimensions.actionCardMinHeight),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: cs.outline.withOpacity(0.12)),
+            border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
           ),
           child: Row(
             children: [
@@ -154,7 +156,15 @@ class _ActionCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+                    SizedBox(
+                      height: AppDimensions.twoLineTextHeight,
+                      child: Text(
+                        subtitle,
+                        style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -178,11 +188,12 @@ class _StepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
+      constraints: const BoxConstraints(minHeight: AppDimensions.stepCardMinHeight),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outline.withOpacity(0.1)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -200,7 +211,15 @@ class _StepCard extends StatelessWidget {
               children: [
                 Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text(desc, style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant, height: 1.4)),
+                SizedBox(
+                  height: AppDimensions.twoLineTextHeight,
+                  child: Text(
+                    desc,
+                    style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant, height: 1.4),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),

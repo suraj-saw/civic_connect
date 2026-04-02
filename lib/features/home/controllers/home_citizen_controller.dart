@@ -20,6 +20,7 @@ class HomeCitizenController extends GetxController {
 
   void resetToDashboard() { currentIndex.value = 0; showMyIssues.value = false; }
 
+  @override
   void refresh() {
     update();
     if (Get.isRegistered<MyIssuesController>()) Get.find<MyIssuesController>().refresh();

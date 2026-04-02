@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../../../data/repositories/auth_reporsitory.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -165,7 +166,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: cs.outline.withOpacity(0.12)),
       ),
       child: Column(children: children),

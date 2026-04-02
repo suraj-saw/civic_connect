@@ -35,17 +35,17 @@ class AdminDrawer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
-                      radius: 32, backgroundColor: Colors.white.withOpacity(0.25),
+                      radius: 32, backgroundColor: Colors.white.withValues(alpha: 0.25),
                       child: Text(initial, style: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
                     ),
                     const SizedBox(height: 14),
                     Text(name, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
                     const SizedBox(height: 2),
-                    Text(ctrl.adminEmail.value, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.8), fontSize: 12)),
+                    Text(ctrl.adminEmail.value, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
                       child: Text(ctrl.adminDept.value.toUpperCase(),
                           style: GoogleFonts.inter(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                     ),
@@ -87,7 +87,7 @@ class _DrawerItem extends StatelessWidget {
     return ListTile(
       leading: Container(
         width: 38, height: 38,
-        decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: c, size: 20),
       ),
       title: Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: c)),
