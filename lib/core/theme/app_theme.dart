@@ -33,7 +33,7 @@ class TAppTheme {
         iconTheme: IconThemeData(color: cs.onSurface, size: 22),
         actionsIconTheme: IconThemeData(color: cs.onSurface, size: 22),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: cs.surface,
         surfaceTintColor: Colors.transparent,
@@ -101,7 +101,7 @@ class TAppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
       dividerTheme: DividerThemeData(color: cs.outline.withValues(alpha: 0.12), thickness: 1, space: 1),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         elevation: 4,
         titleTextStyle: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: cs.onSurface),
