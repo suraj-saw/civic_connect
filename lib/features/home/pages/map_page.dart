@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../core/constants/mapbox_constants.dart';
+import '../../../core/utils/location_storage_service.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -30,6 +31,7 @@ class _MapPageState extends State<MapPage> {
   bool _showPublicTransport = true;
   bool _showTraffic = false;
   bool _show3D = false;
+  late Point _initialLocation;
 
   StreamSubscription<geo.Position>? _headingSub;
   double? _lastAppliedBearing;
@@ -39,6 +41,19 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     super.initState();
     _selectedStyle = _primaryTypeOptions['Default']!;
+    _initialLocation = _initialDelhi;
+    _loadLastLocation();
+  }
+
+  Future<void> _loadLastLocation() async {
+    final lastLocation = await LocationStorageService.getLastLocation();
+    if (lastLocation != null) {
+      setState(() {
+        _initialLocation = Point(
+          coordinates: Position(lastLocation.longitude, lastLocation.latitude),
+        );
+      });
+    }
   }
 
   String get _resolvedStyleUri {
@@ -205,6 +220,11 @@ class _MapPageState extends State<MapPage> {
           CameraOptions(center: target, zoom: 16.5, pitch: _show3D ? 45 : 0),
           MapAnimationOptions(duration: 1000),
         );
+        // Save the location for future app launches
+        await LocationStorageService.saveLastLocation(
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+        );
         await _startHeadingFollowIfNeeded();
       }
     } catch (_) {
@@ -328,7 +348,7 @@ class _MapPageState extends State<MapPage> {
           key: const ValueKey('citizen_mapbox_map'),
           styleUri: _resolvedStyleUri,
           cameraOptions: CameraOptions(
-            center: _initialDelhi,
+            center: _initialLocation,
             zoom: 13.2,
             pitch: 0,
           ),
