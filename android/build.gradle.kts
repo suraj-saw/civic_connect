@@ -2,6 +2,18 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        val mapboxDownloadsToken = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull
+        if (!mapboxDownloadsToken.isNullOrBlank()) {
+            maven("https://api.mapbox.com/downloads/v2/releases/maven") {
+                credentials {
+                    username = "mapbox"
+                    password = mapboxDownloadsToken
+                }
+                authentication {
+                    create<BasicAuthentication>("basic")
+                }
+            }
+        }
     }
 }
 
