@@ -181,6 +181,22 @@ class ReportIssueController extends GetxController {
     }
   }
 
+  void updateIssueLocation({
+    required double latitude,
+    required double longitude,
+    double? accuracy,
+    String source = 'manual',
+  }) {
+    issueLocation.value = {
+      'latitude': latitude,
+      'longitude': longitude,
+      'accuracy': accuracy ?? IssueConstants.duplicateMinimumRadiusInMeters,
+      'capturedAt': DateTime.now().toIso8601String(),
+      'source': source,
+    };
+    isFormDirty.value = true;
+  }
+
   Future<bool> _promptAndFetchLocation() async {
     final completer = Completer<bool>();
     Get.dialog(
