@@ -645,4 +645,3 @@ class _MissingTokenView extends StatelessWidget {
     );
   }
 }
-
