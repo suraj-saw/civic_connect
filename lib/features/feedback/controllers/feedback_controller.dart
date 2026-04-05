@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../models/citizen_model_feedback.dart';
 
 class FeedbackController extends GetxController {
@@ -81,7 +82,7 @@ class FeedbackController extends GetxController {
   }
 
   Future<void> submit() async {
-    if (comments.value.trim().isEmpty) { Get.snackbar('Required', 'Please write a comment before submitting.', snackPosition: SnackPosition.BOTTOM); return; }
+    if (comments.value.trim().isEmpty) { AppSnackbar.show('Required', 'Please write a comment before submitting.', snackPosition: SnackPosition.BOTTOM); return; }
     final email = _auth.currentUser?.email;
     if (email == null) return;
     isSubmitting.value = true;
@@ -93,8 +94,8 @@ class FeedbackController extends GetxController {
       await _firestore.collection('issues').doc(issueId).collection('feedback').doc(_docId).set(feedback.toMap());
       await _firestore.collection('issues').doc(issueId).update({'citizenFeedbackSubmitted': true, 'citizenOverallRating': overallRating.value, 'citizenReportedFixed': issueActuallyFixed.value});
       existingFeedback.value = feedback; alreadySubmitted.value = true;
-      if (issueActuallyFixed.value) Get.snackbar('Thank you!', 'Your feedback holds authorities accountable.', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
-    } catch (e) { debugPrint('[Feedback] Submit error: $e'); Get.snackbar('Error', 'Could not submit feedback. Please try again.', snackPosition: SnackPosition.BOTTOM);
+      if (issueActuallyFixed.value) AppSnackbar.show('Thank you!', 'Your feedback holds authorities accountable.', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
+    } catch (e) { debugPrint('[Feedback] Submit error: $e'); AppSnackbar.show('Error', 'Could not submit feedback. Please try again.', snackPosition: SnackPosition.BOTTOM);
     } finally { isSubmitting.value = false; }
   }
 
@@ -106,8 +107,8 @@ class FeedbackController extends GetxController {
   void removeReopenPhoto(int index) => reopenImages.removeAt(index);
 
   Future<void> submitReopen() async {
-    if (reopenImages.isEmpty) { Get.snackbar('Photo Required', 'Please attach at least 1 photo.', snackPosition: SnackPosition.BOTTOM); return; }
-    if (reopenDescription.value.trim().isEmpty) { Get.snackbar('Required', 'Please enter a description.', snackPosition: SnackPosition.BOTTOM); return; }
+    if (reopenImages.isEmpty) { AppSnackbar.show('Photo Required', 'Please attach at least 1 photo.', snackPosition: SnackPosition.BOTTOM); return; }
+    if (reopenDescription.value.trim().isEmpty) { AppSnackbar.show('Required', 'Please enter a description.', snackPosition: SnackPosition.BOTTOM); return; }
     final email = _auth.currentUser?.email;
     if (email == null) return;
     isReopening.value = true;
@@ -132,8 +133,8 @@ class FeedbackController extends GetxController {
       batch.delete(feedbackRef);
       await batch.commit();
       reopenSucceeded.value = true;
-      Get.snackbar('Issue Reopened', 'Your proof has been submitted. The department must resolve this again.', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 4), backgroundColor: Colors.orange.shade100);
-    } catch (e) { debugPrint('[Reopen] Error: $e'); Get.snackbar('Error', 'Could not reopen the issue. Please try again.', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.show('Issue Reopened', 'Your proof has been submitted. The department must resolve this again.', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 4), backgroundColor: Colors.orange.shade100);
+    } catch (e) { debugPrint('[Reopen] Error: $e'); AppSnackbar.show('Error', 'Could not reopen the issue. Please try again.', snackPosition: SnackPosition.BOTTOM);
     } finally { isReopening.value = false; }
   }
 }

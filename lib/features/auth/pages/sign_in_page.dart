@@ -35,13 +35,15 @@ class _SignInPageState extends State<SignInPage> {
             children: [
               _HeroHeader(cs: cs).animate().fadeIn(duration: 500.ms),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                       _FieldLabel('Email'),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -158,7 +160,9 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                         ),
                       ).animate().fadeIn(delay: 250.ms),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -197,11 +201,14 @@ class _HeroHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: cs.onPrimary.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.location_city_rounded,
-                color: Colors.white, size: 32),
+            child: Icon(
+              Icons.location_city_rounded,
+              color: cs.onPrimary,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -209,7 +216,7 @@ class _HeroHeader extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 30,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: cs.onPrimary,
               letterSpacing: -0.5,
             ),
           ),
@@ -218,7 +225,7 @@ class _HeroHeader extends StatelessWidget {
             'Welcome back! Sign in to continue.',
             style: GoogleFonts.inter(
                 fontSize: 14,
-                color: Colors.white.withOpacity(0.85)),
+                color: cs.onPrimary.withValues(alpha: 0.88)),
           ),
         ],
       ),
@@ -233,7 +240,9 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: GoogleFonts.inter(
-        fontWeight: FontWeight.w600, fontSize: 13),
+    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: Theme.of(context).colorScheme.onSurface,
+    ),
   );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 class IssuePermissionController extends GetxController {
   final isCheckingLocationPermission = true.obs;
@@ -20,7 +21,7 @@ class IssuePermissionController extends GetxController {
         if (status.isPermanentlyDenied) {
           _showSettingsDialog('location');
         } else {
-          Get.snackbar('Location Required', 'Please enable location to report an issue.', snackPosition: SnackPosition.BOTTOM);
+          AppSnackbar.show('Location Required', 'Please enable location to report an issue.', snackPosition: SnackPosition.BOTTOM);
         }
       }
     } finally { isCheckingLocationPermission.value = false; }
@@ -35,7 +36,7 @@ class IssuePermissionController extends GetxController {
     final result = await Permission.camera.request();
     if (result.isGranted) return true;
     if (result.isPermanentlyDenied) _showSettingsDialog('camera');
-    else Get.snackbar('Permission Denied', 'Camera permission is required.', snackPosition: SnackPosition.BOTTOM);
+    else AppSnackbar.show('Permission Denied', 'Camera permission is required.', snackPosition: SnackPosition.BOTTOM);
     return false;
   }
 
@@ -46,7 +47,7 @@ class IssuePermissionController extends GetxController {
     final result = await Permission.microphone.request();
     if (result.isGranted) return true;
     if (result.isPermanentlyDenied) _showSettingsDialog('microphone');
-    else Get.snackbar('Permission Denied', 'Microphone permission is required.', snackPosition: SnackPosition.BOTTOM);
+    else AppSnackbar.show('Permission Denied', 'Microphone permission is required.', snackPosition: SnackPosition.BOTTOM);
     return false;
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/models/issue_model.dart';
 import './map_status_utils.dart';
 
@@ -18,9 +19,7 @@ class IssueDetailBottomSheet {
   static void _openIssueDetail(BuildContext context, String? issueId) {
     final id = issueId?.trim() ?? '';
     if (id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Issue details are unavailable.')),
-      );
+      AppSnackbar.show('Unavailable', 'Issue details are unavailable.');
       return;
     }
 
@@ -128,6 +127,7 @@ class IssueDetailBottomSheet {
     if (issues.isEmpty) return;
 
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final groupedIssues = _buildDisplayGroups(issues);
     final totalReports = groupedIssues.fold<int>(
       0,
@@ -213,10 +213,15 @@ class IssueDetailBottomSheet {
                     return Container(
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest.withOpacity(0.32),
+                        color: Color.alphaBlend(
+                          cs.primary.withValues(alpha: isDark ? 0.10 : 0.03),
+                          cs.surfaceContainerHighest,
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: cs.outlineVariant.withOpacity(0.9),
+                          color: cs.outlineVariant.withValues(
+                            alpha: isDark ? 0.65 : 0.88,
+                          ),
                         ),
                       ),
                       child: Column(

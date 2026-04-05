@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/services/media_service.dart';
 import '../../../data/services/storage_service.dart';
 import '../controllers/issue_category_controller.dart';
@@ -99,7 +100,7 @@ class IssueDetailAdminPage extends StatelessWidget {
             child: const Text('Next'),
             onPressed: () {
               final msg = msgCtrl.text.trim();
-              if (msg.isEmpty) { Get.snackbar('Required', 'Please enter a message.', snackPosition: SnackPosition.BOTTOM); return; }
+              if (msg.isEmpty) { AppSnackbar.show('Required', 'Please enter a message.', snackPosition: SnackPosition.BOTTOM); return; }
               Navigator.pop(context);
               if (selectedStatus == 'resolved') {
                 _showResolveBottomSheet(context, msg);
@@ -134,9 +135,9 @@ class IssueDetailAdminPage extends StatelessWidget {
           'updatedBy': uid, 'updatedByEmail': adminEmail, 'timestamp': Timestamp.now(),
         }]),
       });
-      Get.snackbar('Updated', 'Status updated successfully.', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.show('Updated', 'Status updated successfully.', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update: $e', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.show('Error', 'Failed to update: $e', snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -168,7 +169,7 @@ class IssueDetailAdminPage extends StatelessWidget {
           ElevatedButton(
             child: const Text('Reassign'),
             onPressed: () async {
-              if (reasonCtrl.text.trim().isEmpty) { Get.snackbar('Required', 'Please enter a reason.', snackPosition: SnackPosition.BOTTOM); return; }
+              if (reasonCtrl.text.trim().isEmpty) { AppSnackbar.show('Required', 'Please enter a reason.', snackPosition: SnackPosition.BOTTOM); return; }
               Navigator.pop(context);
               await _submitReassign(selectedDept, reasonCtrl.text.trim(), fromDept);
             },
@@ -198,9 +199,9 @@ class IssueDetailAdminPage extends StatelessWidget {
           'reassignedByUid': uid, 'reassignedByEmail': adminEmail, 'reassignedAt': FieldValue.serverTimestamp(),
         });
       });
-      Get.snackbar('Success', 'Issue reassigned to ${toDept.toUpperCase()}.', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.show('Success', 'Issue reassigned to ${toDept.toUpperCase()}.', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to reassign: $e', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.show('Error', 'Failed to reassign: $e', snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -240,6 +241,7 @@ class _ResolutionProofSection extends StatelessWidget {
     final resolution = data['resolution'] as Map<String, dynamic>?;
     if (resolution == null) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final imageUrls = (resolution['proofImageUrls'] as List<dynamic>? ?? []).whereType<String>().toList();
     final notes = resolution['notes'] as String?;
 
@@ -247,20 +249,36 @@ class _ResolutionProofSection extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green.shade50, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade200),
+        color: Color.alphaBlend(
+          cs.tertiary.withValues(alpha: isDark ? 0.16 : 0.07),
+          cs.surface,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: cs.tertiary.withValues(alpha: isDark ? 0.38 : 0.26),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Icon(Icons.verified_rounded, color: Colors.green, size: 18),
+            Icon(Icons.verified_rounded, color: cs.tertiary, size: 18),
             const SizedBox(width: 8),
-            Text('Resolution Proof', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.green.shade800)),
+            Text(
+              'Resolution Proof',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: cs.onSurface,
+              ),
+            ),
           ]),
           if (notes != null && notes.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(notes, style: GoogleFonts.inter(fontSize: 13)),
+            Text(
+              notes,
+              style: GoogleFonts.inter(fontSize: 13, color: cs.onSurface),
+            ),
           ],
           if (imageUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -325,7 +343,7 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
 
   Future<void> _submit() async {
     if (_images.isEmpty) {
-      Get.snackbar('Photo Required', 'Please attach at least one photo.',
+      AppSnackbar.show('Photo Required', 'Please attach at least one photo.',
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -368,11 +386,10 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
       });
 
       if (mounted) Navigator.pop(context);
-      Get.snackbar('Resolved', 'Issue marked as resolved.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade100);
+      AppSnackbar.show('Resolved', 'Issue marked as resolved.',
+          snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to submit resolution: $e',
+      AppSnackbar.show('Error', 'Failed to submit resolution: $e',
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -382,6 +399,7 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -389,28 +407,69 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Row(children: [
-            Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-                child: Icon(Icons.check_circle_outline, color: Colors.green.shade700)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color.alphaBlend(
+                  cs.tertiary.withValues(alpha: isDark ? 0.22 : 0.12),
+                  cs.surface,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.check_circle_outline, color: cs.tertiary),
+            ),
             const SizedBox(width: 12),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Submit Resolution Proof', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              SizedBox(height: 2),
-              Text('At least one photo is required.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ])),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Submit Resolution Proof',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'At least one photo is required.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
           ]),
           const Divider(height: 24),
-          Container(width: double.infinity, padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade200)),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Notes', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Text(widget.notes, style: const TextStyle(fontSize: 14)),
-              ])),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: isDark ? 0.34 : 0.62),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                'Notes',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(widget.notes, style: TextStyle(fontSize: 14, color: cs.onSurface)),
+            ]),
+          ),
           const SizedBox(height: 20),
           Row(children: [
             Text('Photos', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
-            Text(' *', style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.w700)),
+            Text(' *', style: GoogleFonts.inter(color: cs.error, fontWeight: FontWeight.w700)),
             const Spacer(),
             Text('${_images.length}/5', style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant)),
           ]),
@@ -442,13 +501,25 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
           Text('Video (optional)', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
           const SizedBox(height: 8),
           if (_video != null)
-            Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.green.shade200)),
-                child: Row(children: [
-                  Icon(Icons.videocam, color: Colors.green.shade700, size: 20), const SizedBox(width: 8),
-                  const Expanded(child: Text('Video recorded', style: TextStyle(fontSize: 13))),
-                  GestureDetector(onTap: () => setState(() => _video = null), child: const Icon(Icons.close, size: 18, color: Colors.grey)),
-                ]))
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Color.alphaBlend(
+                  cs.secondary.withValues(alpha: isDark ? 0.18 : 0.1),
+                  cs.surface,
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: cs.secondary.withValues(alpha: isDark ? 0.42 : 0.24),
+                ),
+              ),
+              child: Row(children: [
+                Icon(Icons.videocam, color: cs.secondary, size: 20), const SizedBox(width: 8),
+                Expanded(child: Text('Video recorded', style: TextStyle(fontSize: 13, color: cs.onSurface))),
+                GestureDetector(onTap: () => setState(() => _video = null), child: Icon(Icons.close, size: 18, color: cs.onSurfaceVariant)),
+              ]),
+            )
           else
             SizedBox(width: double.infinity, child: OutlinedButton.icon(icon: const Icon(Icons.videocam_outlined, size: 17),
                 label: const Text('Record Video'), onPressed: _recordVideo)),
@@ -456,7 +527,11 @@ class _ResolveProofSheetState extends State<_ResolveProofSheet> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               onPressed: _isSubmitting ? null : _submit,
               icon: _isSubmitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.check_circle_outline_rounded),

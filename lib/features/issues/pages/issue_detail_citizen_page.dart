@@ -57,7 +57,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,14 +65,29 @@ class IssueDetailCitizenPage extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: Text(data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
-                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800))),
+              Expanded(
+                child: Text(
+                  data['categoryId']?.toUpperCase() ?? 'UNKNOWN',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
               _StatusChip(status: status),
             ],
           ),
           Divider(height: 20, color: cs.outline.withOpacity(0.12)),
-          Text(data['description'] ?? 'No description', style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: cs.onSurface)),
+          Text(
+            data['description'] ?? 'No description',
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              height: 1.52,
+              color: cs.onSurface,
+            ),
+          ),
           const SizedBox(height: 14),
           _metaRow(context, Icons.access_time_rounded, _fmt(data['createdAt'])),
           const SizedBox(height: 6),
@@ -108,7 +123,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +166,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +253,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

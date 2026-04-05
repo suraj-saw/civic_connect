@@ -16,11 +16,39 @@ class TAppTheme {
   static ThemeData _build(ColorScheme cs, Color scaffoldBg) {
     final isDark = cs.brightness == Brightness.dark;
     final base = GoogleFonts.interTextTheme();
+    final textTheme = base.copyWith(
+      displayLarge: base.displayLarge?.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.4,
+      ),
+      headlineMedium: base.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+      ),
+      bodyLarge: base.bodyLarge?.copyWith(
+        fontSize: 15,
+        height: 1.38,
+      ),
+      bodyMedium: base.bodyMedium?.copyWith(
+        fontSize: 14,
+        height: 1.35,
+      ),
+      labelLarge: base.labelLarge?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+      ),
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: cs,
       scaffoldBackgroundColor: scaffoldBg,
-      textTheme: base.apply(bodyColor: cs.onSurface, displayColor: cs.onSurface),
+      textTheme: textTheme.apply(bodyColor: cs.onSurface, displayColor: cs.onSurface),
       appBarTheme: AppBarTheme(
         backgroundColor: cs.surface,
         foregroundColor: cs.onSurface,
@@ -115,8 +143,26 @@ class TAppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFF1A1A1A),
-        contentTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        backgroundColor: Color.alphaBlend(
+          cs.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+          cs.surface,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          color: cs.onSurface,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: cs.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        modalElevation: 0,
+        showDragHandle: true,
+        dragHandleColor: cs.outline.withValues(alpha: isDark ? 0.55 : 0.35),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
       ),
       drawerTheme: DrawerThemeData(
         backgroundColor: cs.surface,

@@ -15,10 +15,15 @@ class MapCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: cs.surface,
+      color: Color.alphaBlend(
+        cs.primary.withValues(alpha: isDark ? 0.12 : 0.04),
+        cs.surface,
+      ),
       shape: const CircleBorder(),
-      elevation: 4,
+      elevation: isDark ? 2.5 : 4,
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.34 : 0.12),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
@@ -82,8 +87,14 @@ class MapTypeTile extends StatelessWidget {
                 gradient: LinearGradient(
                   colors:
                       selected
-                          ? [const Color(0xFF81D4FA), const Color(0xFFB2DFDB)]
-                          : [const Color(0xFFCFD8DC), const Color(0xFFECEFF1)],
+                          ? [
+                            colorScheme.primaryContainer,
+                            colorScheme.secondaryContainer,
+                          ]
+                          : [
+                            colorScheme.surfaceContainerHigh,
+                            colorScheme.surfaceContainerHighest,
+                          ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -102,6 +113,7 @@ class MapTypeTile extends StatelessWidget {
               style: TextStyle(
                 color: selected ? colorScheme.primary : colorScheme.onSurface,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
               ),
             ),
           ],
@@ -198,6 +210,8 @@ class MapDetailTile extends StatelessWidget {
               style: TextStyle(
                 color: selected ? colorScheme.primary : colorScheme.onSurface,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12.5,
+                height: 1.2,
               ),
             ),
           ],
@@ -261,9 +275,9 @@ class MissingTokenView extends StatelessWidget {
           width: 560,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: cs.errorContainer.withValues(alpha: 0.15),
+            color: cs.errorContainer.withValues(alpha: 0.22),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: cs.error.withValues(alpha: 0.2)),
+            border: Border.all(color: cs.error.withValues(alpha: 0.28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -274,12 +288,18 @@ class MissingTokenView extends StatelessWidget {
                 'Configuration Missing',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(color: cs.error),
+                ).textTheme.titleMedium?.copyWith(
+                  color: cs.error,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Add your Mapbox public token to the .env file in the project root.',
                 textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: cs.onErrorContainer,
+                ),
               ),
             ],
           ),

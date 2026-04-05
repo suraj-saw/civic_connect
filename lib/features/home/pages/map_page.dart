@@ -7,6 +7,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../core/constants/mapbox_constants.dart';
 import '../../../core/utils/location_storage_service.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/services/firestore_service.dart';
 import '../utils/map_markers_manager.dart';
 import '../utils/map_issue_bottom_sheet.dart';
@@ -259,10 +260,9 @@ class _MapPageState extends State<MapPage> {
           await geo.Geolocator.openAppSettings();
         }
         if (mounted && !silent) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Enable location permission in app settings.'),
-            ),
+          AppSnackbar.show(
+            'Permission Required',
+            'Enable location permission in app settings.',
           );
         }
         return;
@@ -280,9 +280,7 @@ class _MapPageState extends State<MapPage> {
 
       if (pos == null) {
         if (mounted && !silent) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Current location unavailable.')),
-          );
+          AppSnackbar.show('Location Unavailable', 'Current location unavailable.');
         }
         return;
       }
@@ -306,9 +304,7 @@ class _MapPageState extends State<MapPage> {
       }
     } catch (_) {
       if (mounted && !silent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not fetch current location.')),
-        );
+        AppSnackbar.show('Location Error', 'Could not fetch current location.');
       }
     } finally {
       if (mounted && !silent) {
@@ -345,11 +341,11 @@ class _MapPageState extends State<MapPage> {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Map type',
-                            style: TextStyle(
-                              fontSize: 26,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -380,10 +376,10 @@ class _MapPageState extends State<MapPage> {
                     const SizedBox(height: 18),
                     const Divider(height: 1),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Map details',
-                      style: TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 21,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

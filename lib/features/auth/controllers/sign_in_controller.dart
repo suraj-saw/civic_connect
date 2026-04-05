@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/routes/app_routes.dart';
 
 class SignInController {
@@ -36,14 +37,14 @@ class SignInController {
         throw Exception('Invalid user role');
       }
     } on FirebaseAuthException catch (e) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Sign In Failed',
         e.message ?? 'Authentication failed',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red[300],
       );
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,

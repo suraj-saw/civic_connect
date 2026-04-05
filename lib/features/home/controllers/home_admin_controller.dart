@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/repositories/auth_reporsitory.dart';
 
 enum AdminIssueSortOption {
@@ -229,7 +230,7 @@ class HomeAdminController extends GetxController {
         Get.offAllNamed(AppRoutes.signIn);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to sign out: $e');
+      AppSnackbar.show('Error', 'Failed to sign out: $e');
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_dimensions.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/repositories/auth_reporsitory.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -32,7 +33,7 @@ class ProfilePage extends StatelessWidget {
       try {
         await _auth.signOut();
       } catch (e) {
-        Get.snackbar("Error", "Failed to sign out. Please try again.", snackPosition: SnackPosition.BOTTOM);
+        AppSnackbar.show("Error", "Failed to sign out. Please try again.", snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -41,6 +42,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (uid == null) {
       return Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -87,19 +89,48 @@ class ProfilePage extends StatelessWidget {
                       Container(
                         width: 80, height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.22),
+                          color: cs.onPrimary.withValues(alpha: 0.22),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                          border: Border.all(
+                            color: cs.onPrimary.withValues(alpha: 0.36),
+                            width: 2,
+                          ),
                         ),
-                        child: Center(child: Text(initial, style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.w800, color: Colors.white))),
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.inter(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w800,
+                              color: cs.onPrimary,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 14),
-                      Text(name, style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                      Text(
+                        name,
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onPrimary,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                        child: Text(role, style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                        decoration: BoxDecoration(
+                          color: cs.onPrimary.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          role,
+                          style: GoogleFonts.inter(
+                            color: cs.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -111,7 +142,13 @@ class ProfilePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 4),
-                      Text('Account Info', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: cs.onSurfaceVariant))
+                      Text(
+                        'Account Info',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      )
                           .animate().fadeIn(delay: 100.ms),
                       const SizedBox(height: 10),
 
@@ -127,7 +164,7 @@ class ProfilePage extends StatelessWidget {
                           label: 'Phone Verified',
                           value: verified ? 'Verified' : 'Not Verified',
                           cs: cs,
-                          valueColor: verified ? Colors.green : Colors.orange,
+                          valueColor: verified ? cs.tertiary : cs.error,
                         ),
                       ]).animate().fadeIn(delay: 150.ms).slideY(begin: 0.05),
 
@@ -138,7 +175,13 @@ class ProfilePage extends StatelessWidget {
                           icon: Icon(Icons.logout_rounded, color: cs.error),
                           label: Text('Sign Out', style: TextStyle(color: cs.error, fontWeight: FontWeight.w600)),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: cs.error.withOpacity(0.6)),
+                            side: BorderSide(
+                              color: cs.error.withValues(alpha: isDark ? 0.75 : 0.6),
+                            ),
+                            backgroundColor: Color.alphaBlend(
+                              cs.error.withValues(alpha: isDark ? 0.16 : 0.07),
+                              cs.surface,
+                            ),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                           onPressed: () => _handleLogout(context),
@@ -167,7 +210,7 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
       ),
       child: Column(children: children),
     );
@@ -190,7 +233,10 @@ class _InfoRow extends StatelessWidget {
         children: [
           Container(
             width: 38, height: 38,
-            decoration: BoxDecoration(color: cs.primaryContainer.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: cs.primary, size: 18),
           ),
           const SizedBox(width: 14),

@@ -22,11 +22,15 @@ class VerifyOtpPage extends StatelessWidget {
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.all(28),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight - 56),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 56,
+                    maxWidth: 460,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -43,8 +47,8 @@ class VerifyOtpPage extends StatelessWidget {
                     const SizedBox(height: 28),
                     Text(
                       'Verify Your Number',
-                      style: GoogleFonts.inter(
-                        fontSize: 24,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontSize: 25,
                         fontWeight: FontWeight.w700,
                       ),
                       textAlign: TextAlign.center,
@@ -55,6 +59,7 @@ class VerifyOtpPage extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         color: cs.onSurfaceVariant,
+                        height: 1.4,
                       ),
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(delay: 150.ms),
@@ -75,7 +80,7 @@ class VerifyOtpPage extends StatelessWidget {
                         hintStyle: GoogleFonts.inter(
                           fontSize: 24,
                           letterSpacing: 8,
-                          color: cs.onSurfaceVariant.withOpacity(0.4),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.42),
                         ),
                       ),
                     ).animate().fadeIn(delay: 200.ms),
@@ -112,7 +117,8 @@ class VerifyOtpPage extends StatelessWidget {
                         ),
                       ),
                     ).animate().fadeIn(delay: 300.ms),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );

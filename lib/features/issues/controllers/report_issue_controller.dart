@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import '../../../core/constants/issue_constants.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../data/models/issue_model.dart';
 import '../../../data/services/firestore_service.dart';
 import '../../../data/services/media_service.dart';
@@ -136,7 +137,7 @@ class ReportIssueController extends GetxController {
     } else {
       final hasPermission = await _recorder.hasPermission();
       if (!hasPermission) {
-        Get.snackbar('Permission', 'Microphone permission required.',
+        AppSnackbar.show('Permission', 'Microphone permission required.',
             snackPosition: SnackPosition.BOTTOM);
         return;
       }
@@ -238,17 +239,17 @@ class ReportIssueController extends GetxController {
 
   bool _validateFieldsOnly() {
     if (description.value.trim().isEmpty) {
-      Get.snackbar('Required', 'Please enter a description.',
+      AppSnackbar.show('Required', 'Please enter a description.',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
     if (selectedCategoryId.value == null) {
-      Get.snackbar('Required', 'Please select a category.',
+      AppSnackbar.show('Required', 'Please select a category.',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
     if (selectedImages.isEmpty) {
-      Get.snackbar('Photo Required', 'Please attach at least one photo.',
+      AppSnackbar.show('Photo Required', 'Please attach at least one photo.',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
@@ -327,7 +328,7 @@ class ReportIssueController extends GetxController {
           currentCount: currentCount,
           currentReporters: currentReporters,
           reporterEmail: user!.email!);
-      Get.snackbar('Noted!',
+      AppSnackbar.show('Noted!',
           'Your report has been counted. The issue is already being tracked.',
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 3));
@@ -336,7 +337,7 @@ class ReportIssueController extends GetxController {
       navigateCitizenToDashboard();
     } catch (e) {
       isSubmitting.value = false;
-      Get.snackbar('Error', 'Could not record your report. Please try again.',
+      AppSnackbar.show('Error', 'Could not record your report. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -428,14 +429,14 @@ class ReportIssueController extends GetxController {
       final msg = e.code == 'permission-denied'
           ? 'Permission denied. Check storage rules.'
           : 'Failed to submit: ${e.message ?? e.code}';
-      Get.snackbar('Error', msg,
+      AppSnackbar.show('Error', msg,
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 3));
     } catch (e) {
       isSubmitting.value = false;
       uploadProgress.value = 0.0;
       Get.back();
-      Get.snackbar('Error', 'Failed to submit: $e',
+      AppSnackbar.show('Error', 'Failed to submit: $e',
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 3));
     }

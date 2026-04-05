@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 class SignUpController extends GetxController {
   late final TextEditingController nameController;
@@ -44,7 +45,7 @@ class SignUpController extends GetxController {
         .get();
 
     if (snap.docs.isNotEmpty) {
-      Get.snackbar('Error', 'Phone number already registered. Use another.');
+      AppSnackbar.show('Error', 'Phone number already registered. Use another.');
       return true;
     }
     return false;
@@ -65,7 +66,7 @@ class SignUpController extends GetxController {
         phoneNumber: formattedPhone,
         verificationCompleted: (_) {},
         verificationFailed: (e) {
-          Get.snackbar('Error', e.message ?? 'OTP failed');
+          AppSnackbar.show('Error', e.message ?? 'OTP failed');
         },
         codeSent: (verificationId, _) {
           _verificationId = verificationId;
@@ -76,9 +77,9 @@ class SignUpController extends GetxController {
         },
       );
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Unable to send OTP');
+      AppSnackbar.show('Error', e.message ?? 'Unable to send OTP');
     } on FirebaseException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Unable to send OTP');
+      AppSnackbar.show('Error', e.message ?? 'Unable to send OTP');
     } finally {
       isLoading.value = false;
     }
@@ -86,12 +87,12 @@ class SignUpController extends GetxController {
 
   Future<void> verifyOtp() async {
     if (_verificationId == null) {
-      Get.snackbar('Error', 'OTP session expired. Please go back and retry.');
+      AppSnackbar.show('Error', 'OTP session expired. Please go back and retry.');
       return;
     }
 
     if (otpController.text.trim().length != 6) {
-      Get.snackbar('Error', 'Enter a valid 6-digit OTP.');
+      AppSnackbar.show('Error', 'Enter a valid 6-digit OTP.');
       return;
     }
 
@@ -125,18 +126,18 @@ class SignUpController extends GetxController {
       // stale if auth state change triggered a rebuild)
       await _writeUserProfile(uid);
 
-      Get.snackbar('Success', 'Account created successfully!');
+      AppSnackbar.show('Success', 'Account created successfully!');
       Get.offAllNamed(AppRoutes.signIn);
     } on FirebaseAuthException catch (e) {
       if (emailUserCred != null) {
         try { await emailUserCred.user?.delete(); } catch (_) {}
       }
-      Get.snackbar('Error', _authErrorMessage(e.code, e.message));
+      AppSnackbar.show('Error', _authErrorMessage(e.code, e.message));
     } catch (e) {
       if (emailUserCred != null) {
         try { await emailUserCred.user?.delete(); } catch (_) {}
       }
-      Get.snackbar('Error', 'Verification failed. Please try again.');
+      AppSnackbar.show('Error', 'Verification failed. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -144,7 +145,7 @@ class SignUpController extends GetxController {
 
   Future<void> resendOtp() async {
     if (_cachedPhone.isEmpty) {
-      Get.snackbar('Error', 'Phone number not found. Go back and try again.');
+      AppSnackbar.show('Error', 'Phone number not found. Go back and try again.');
       return;
     }
 
@@ -154,21 +155,21 @@ class SignUpController extends GetxController {
         phoneNumber: _cachedPhone,
         verificationCompleted: (_) {},
         verificationFailed: (e) {
-          Get.snackbar('Error', e.message ?? 'OTP resend failed');
+          AppSnackbar.show('Error', e.message ?? 'OTP resend failed');
         },
         codeSent: (verificationId, _) {
           _verificationId = verificationId;
           otpController.clear();
-          Get.snackbar('OTP Sent', 'A new OTP has been sent to your phone.');
+          AppSnackbar.show('OTP Sent', 'A new OTP has been sent to your phone.');
         },
         codeAutoRetrievalTimeout: (verificationId) {
           _verificationId = verificationId;
         },
       );
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Unable to resend OTP');
+      AppSnackbar.show('Error', e.message ?? 'Unable to resend OTP');
     } on FirebaseException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Unable to resend OTP');
+      AppSnackbar.show('Error', e.message ?? 'Unable to resend OTP');
     } finally {
       isLoading.value = false;
     }

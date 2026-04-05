@@ -26,11 +26,14 @@ class SignUpPage extends StatelessWidget {
               _Header(cs: cs).animate().fadeIn(duration: 500.ms),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                       _label('Full Name'),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -110,7 +113,9 @@ class SignUpPage extends StatelessWidget {
                           ),
                         ),
                       ).animate().fadeIn(delay: 280.ms),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -121,7 +126,18 @@ class SignUpPage extends StatelessWidget {
     );
   }
 
-  Widget _label(String text) => Text(text, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13));
+  Widget _label(String text) => Builder(
+    builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Text(
+        text,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: cs.onSurface,
+        ),
+      );
+    },
+  );
 }
 
 class _Header extends StatelessWidget {
@@ -144,13 +160,29 @@ class _Header extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.how_to_reg_rounded, color: Colors.white, size: 32),
+            decoration: BoxDecoration(
+              color: cs.onPrimary.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(Icons.how_to_reg_rounded, color: cs.onPrimary, size: 32),
           ),
           const SizedBox(height: 20),
-          Text('Create Account', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(
+            'Create Account',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: cs.onPrimary,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Join CivicConnect and make a difference.', style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withOpacity(0.85))),
+          Text(
+            'Join CivicConnect and make a difference.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: cs.onPrimary.withValues(alpha: 0.88),
+            ),
+          ),
         ],
       ),
     );

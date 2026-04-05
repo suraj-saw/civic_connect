@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/routes/app_routes.dart';
 
 class ForgotPasswordController extends GetxController {
@@ -12,7 +13,7 @@ class ForgotPasswordController extends GetxController {
     final email = emailController.text.trim();
 
     if (email.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Required',
         'Please enter your email address.',
         snackPosition: SnackPosition.BOTTOM,
@@ -23,7 +24,7 @@ class ForgotPasswordController extends GetxController {
     }
 
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Invalid Email',
         'Please enter a valid email address.',
         snackPosition: SnackPosition.BOTTOM,
@@ -46,7 +47,7 @@ class ForgotPasswordController extends GetxController {
         'Too many attempts. Please try again later.',
         _ => e.message ?? 'Failed to send reset email. Please try again.',
       };
-      Get.snackbar(
+      AppSnackbar.show(
         'Error',
         message,
         snackPosition: SnackPosition.BOTTOM,
@@ -55,7 +56,7 @@ class ForgotPasswordController extends GetxController {
         duration: const Duration(seconds: 4),
       );
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Error',
         'Something went wrong. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
