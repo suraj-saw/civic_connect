@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as path;
 import '../controllers/report_issue_controller.dart';
 import 'media_item_card.dart';
+import 'media_player/audio_player_widget.dart';
 
 class AudioPickerSection extends GetView<ReportIssueController> {
   const AudioPickerSection({Key? key}) : super(key: key);
@@ -27,7 +28,18 @@ class AudioPickerSection extends GetView<ReportIssueController> {
           Obx(() {
             final audio = controller.selectedAudio.value;
             if (audio != null) {
-              return MediaItemCard(label: 'Audio Recorded', fileName: path.basename(audio.path), onRemove: controller.removeAudio);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AudioPlayerWidget(filePath: audio.path),
+                  const SizedBox(height: 8),
+                  MediaItemCard(
+                    label: 'Audio Recorded',
+                    fileName: path.basename(audio.path),
+                    onRemove: controller.removeAudio,
+                  ),
+                ],
+              );
             }
             final isRecording = controller.isRecording.value;
             return SizedBox(

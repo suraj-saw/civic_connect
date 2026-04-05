@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
-  final String audioUrl;
-  const AudioPlayerWidget({super.key, required this.audioUrl});
+  final String? audioUrl;
+  final String? filePath;
+
+  const AudioPlayerWidget({
+    super.key,
+    this.audioUrl,
+    this.filePath,
+  }) : assert(audioUrl != null || filePath != null);
 
   @override
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -50,7 +56,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           GestureDetector(
             onTap: () async {
               if (isPlaying) { await _player.pause(); }
-              else { await _player.play(UrlSource(widget.audioUrl)); }
+              else {
+                if (widget.filePath != null) {
+                  await _player.play(DeviceFileSource(widget.filePath!));
+                } else {
+                  await _player.play(UrlSource(widget.audioUrl!));
+                }
+              }
             },
             child: Container(
               width: 44, height: 44,

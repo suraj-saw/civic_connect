@@ -1,11 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
-  final String videoUrl;
-  const VideoPlayerWidget({super.key, required this.videoUrl});
+  final String? videoUrl;
+  final String? filePath;
+  final double? previewAspectRatio;
+
+  const VideoPlayerWidget({
+    super.key,
+    this.videoUrl,
+    this.filePath,
+    this.previewAspectRatio,
+  }) : assert(videoUrl != null || filePath != null);
 
   @override
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
@@ -18,7 +27,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+    _ctrl = widget.filePath != null
+        ? VideoPlayerController.file(File(widget.filePath!))
+        : VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl!))
       ..initialize().then((_) { if (mounted) setState(() => _initialized = true); });
     _ctrl.addListener(() { if (mounted) setState(() {}); });
   }
@@ -34,7 +45,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     if (!_initialized) {
       return Container(
         height: 160,
@@ -43,35 +53,105 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
+    final sourceSize = _ctrl.value.size;
+    final sourceWidth = sourceSize.width <= 0 ? 16.0 : sourceSize.width;
+    final sourceHeight = sourceSize.height <= 0 ? 9.0 : sourceSize.height;
+    final effectiveAspectRatio =
+        widget.previewAspectRatio ?? _ctrl.value.aspectRatio;
+    final previewFit =
+        widget.previewAspectRatio != null ? BoxFit.cover : BoxFit.contain;
+    final isPlaying = _ctrl.value.isPlaying;
+
     return Container(
       decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(14)),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () => _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play(),
-            child: AspectRatio(aspectRatio: _ctrl.value.aspectRatio, child: VideoPlayer(_ctrl)),
-          ),
-          Container(
-            color: Colors.black87,
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(_ctrl.value.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, color: Colors.white),
-                  onPressed: () => _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play(),
+      child: AspectRatio(
+        aspectRatio: effectiveAspectRatio,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            GestureDetector(
+              onTap: () => isPlaying ? _ctrl.pause() : _ctrl.play(),
+              child: FittedBox(
+                fit: previewFit,
+                child: SizedBox(
+                  width: sourceWidth,
+                  height: sourceHeight,
+                  child: VideoPlayer(_ctrl),
                 ),
-                Expanded(
-                  child: VideoProgressIndicator(_ctrl, allowScrubbing: true, padding: const EdgeInsets.symmetric(vertical: 8),
-                      colors: const VideoProgressColors(playedColor: Colors.white, bufferedColor: Colors.white38, backgroundColor: Colors.white24)),
-                ),
-                const SizedBox(width: 8),
-                Text('${_fmt(_ctrl.value.position)} / ${_fmt(_ctrl.value.duration)}',
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 10)),
-              ],
+              ),
             ),
-          ),
-        ],
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: isPlaying,
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: isPlaying ? 0 : 1,
+                    duration: const Duration(milliseconds: 180),
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xB3000000)],
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(8, 22, 8, 6),
+                child: Row(
+                  children: [
+                    IconButton(
+                      splashRadius: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => isPlaying ? _ctrl.pause() : _ctrl.play(),
+                    ),
+                    Expanded(
+                      child: VideoProgressIndicator(
+                        _ctrl,
+                        allowScrubbing: true,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        colors: const VideoProgressColors(
+                          playedColor: Colors.white,
+                          bufferedColor: Colors.white38,
+                          backgroundColor: Colors.white24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_fmt(_ctrl.value.position)} / ${_fmt(_ctrl.value.duration)}',
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

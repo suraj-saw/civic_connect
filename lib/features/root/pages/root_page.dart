@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/widgets/app_splash_view.dart';
 import '../../home/controllers/home_admin_controller.dart';
 import '../../home/controllers/home_citizen_controller.dart';
 import '../../issues/controllers/issue_category_controller.dart';
@@ -117,8 +118,6 @@ class _BlankScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return const AppSplashView();
   }
 }

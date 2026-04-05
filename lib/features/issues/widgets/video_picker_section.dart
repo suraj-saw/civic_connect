@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as path;
 import '../controllers/report_issue_controller.dart';
-import 'media_item_card.dart';
+import 'media_player/video_player_widget.dart';
 
 class VideoPickerSection extends GetView<ReportIssueController> {
   const VideoPickerSection({Key? key}) : super(key: key);
@@ -27,7 +27,74 @@ class VideoPickerSection extends GetView<ReportIssueController> {
           Obx(() {
             final video = controller.selectedVideo.value;
             if (video != null) {
-              return MediaItemCard(label: 'Video Selected', fileName: path.basename(video.path), onRemove: controller.removeVideo);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  VideoPlayerWidget(
+                    filePath: video.path,
+                    previewAspectRatio: 5 / 4,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.24),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: cs.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: cs.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Video attached',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                path.basename(video.path),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: controller.removeVideo,
+                          icon: const Icon(Icons.close_rounded, size: 16),
+                          label: const Text('Remove'),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            foregroundColor: cs.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
             }
             return SizedBox(width: double.infinity,
               child: OutlinedButton.icon(icon: const Icon(Icons.videocam_outlined), label: const Text('Capture Video'), onPressed: controller.captureVideo));
