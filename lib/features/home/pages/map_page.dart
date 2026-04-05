@@ -1,11 +1,16 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../core/constants/mapbox_constants.dart';
 import '../../../core/utils/location_storage_service.dart';
+import '../../../data/services/firestore_service.dart';
+import '../utils/map_markers_manager.dart';
+import '../utils/map_issue_bottom_sheet.dart';
+import '../widgets/map_controls.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -18,6 +23,7 @@ class _MapPageState extends State<MapPage> {
   static final _initialDelhi = Point(coordinates: Position(77.2090, 28.6139));
   static final _publicToken = MapboxConstants.publicToken;
   static const _trafficStyleUri = 'mapbox://styles/mapbox/navigation-day-v1';
+  static const _startupCurrentLocationDelay = Duration(milliseconds: 900);
 
   final Map<String, String> _primaryTypeOptions = const {
     'Default': MapboxStyles.STANDARD,
@@ -32,28 +38,98 @@ class _MapPageState extends State<MapPage> {
   bool _showTraffic = false;
   bool _show3D = false;
   late Point _initialLocation;
+  bool _hasRestoredLastLocation = false;
 
   StreamSubscription<geo.Position>? _headingSub;
   double? _lastAppliedBearing;
   DateTime? _lastBearingUpdateAt;
+
+  final _firestoreService = FirestoreService();
+  StreamSubscription<QuerySnapshot>? _issuesStreamSub;
+  MapMarkersManager? _markersManager;
 
   @override
   void initState() {
     super.initState();
     _selectedStyle = _primaryTypeOptions['Default']!;
     _initialLocation = _initialDelhi;
-    _loadLastLocation();
+    _restoreInitialLocation();
   }
 
-  Future<void> _loadLastLocation() async {
+  void _setupIssuesListener() {
+    if (_markersManager == null) return;
+    _issuesStreamSub = _firestoreService.getVisibleIssuesStream().listen(
+      (snapshot) {
+        if (mounted && _markersManager != null) {
+          _markersManager!.updateMarkers(snapshot.docs);
+        }
+      },
+      onError: (e) {
+        debugPrint('[Issues Stream Error]: $e');
+      },
+    );
+  }
+
+  Future<void> _initializeMarkersManager() async {
+    if (_mapboxMap != null && _markersManager == null) {
+      _markersManager = MapMarkersManager(
+        mapboxMap: _mapboxMap,
+        onAnnotationTap: (issues) {
+          IssueDetailBottomSheet.showGrouped(context, issues);
+        },
+      );
+      // Setup listener after manager is initialized
+      _setupIssuesListener();
+      // Load initial issues
+      try {
+        final snapshot = await _firestoreService.getVisibleIssuesStream().first;
+        if (mounted) {
+          await _markersManager!.updateMarkers(snapshot.docs);
+        }
+      } catch (e) {
+        debugPrint('[Initialize Markers Error]: $e');
+      }
+    }
+  }
+
+  Future<void> _restoreInitialLocation() async {
     final lastLocation = await LocationStorageService.getLastLocation();
-    if (lastLocation != null) {
-      setState(() {
+    if (!mounted) return;
+
+    setState(() {
+      if (lastLocation != null) {
         _initialLocation = Point(
           coordinates: Position(lastLocation.longitude, lastLocation.latitude),
         );
-      });
-    }
+      }
+      _hasRestoredLastLocation = true;
+    });
+  }
+
+  Widget _buildLoadingPlaceholder(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: cs.surface,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: cs.primary),
+            const SizedBox(height: 16),
+            Text(
+              'Restoring your last map location...',
+              style: TextStyle(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _startStartupLocationSync() async {
+    await Future<void>.delayed(_startupCurrentLocationDelay);
+    if (!mounted) return;
+    await _goToCurrentLocation(silent: true);
   }
 
   String get _resolvedStyleUri {
@@ -75,6 +151,7 @@ class _MapPageState extends State<MapPage> {
 
     final camera = await map.getCameraState();
     await map.loadStyleURI(_resolvedStyleUri);
+    await _markersManager?.onStyleReloaded();
     await _enableLocationIndicator();
     await map.easeTo(
       CameraOptions(
@@ -292,7 +369,7 @@ class _MapPageState extends State<MapPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _MapTypeGrid(
+                    MapTypeGrid(
                       options: _primaryTypeOptions,
                       selectedStyle: _selectedStyle,
                       onSelect: (style) async {
@@ -311,7 +388,7 @@ class _MapPageState extends State<MapPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    _MapDetailsGrid(
+                    MapDetailsGrid(
                       showPublicTransport: _showPublicTransport,
                       showTraffic: _showTraffic,
                       onTogglePublicTransport: () {
@@ -339,7 +416,11 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     if (_publicToken.isEmpty) {
-      return const _MissingTokenView();
+      return const MissingTokenView();
+    }
+
+    if (!_hasRestoredLastLocation) {
+      return _buildLoadingPlaceholder(context);
     }
 
     return Stack(
@@ -358,19 +439,20 @@ class _MapPageState extends State<MapPage> {
               CompassSettings(enabled: true, fadeWhenFacingNorth: false),
             );
             await _enableLocationIndicator();
-            await _goToCurrentLocation(silent: true);
+            await _initializeMarkersManager();
+            await _startStartupLocationSync();
           },
         ),
         Positioned(
           top: 12,
           right: 12,
-          child: _MapControlStack(
-            topButton: _MapCircleButton(
+          child: MapControlStack(
+            topButton: MapCircleButton(
               icon: Icons.layers_outlined,
               tooltip: 'Map type',
               onTap: _openMapTypeSheet,
             ),
-            bottomButton: _MapCircleButton(
+            bottomButton: MapCircleButton(
               icon:
                   _show3D ? Icons.explore_off_outlined : Icons.explore_outlined,
               tooltip: '3D view',
@@ -381,7 +463,7 @@ class _MapPageState extends State<MapPage> {
         Positioned(
           right: 12,
           bottom: 24,
-          child: _MapCircleButton(
+          child: MapCircleButton(
             icon: _isLocating ? Icons.gps_not_fixed_rounded : Icons.my_location,
             tooltip: 'Current location',
             onTap: _goToCurrentLocation,
@@ -394,274 +476,8 @@ class _MapPageState extends State<MapPage> {
   @override
   void dispose() {
     _headingSub?.cancel();
+    _issuesStreamSub?.cancel();
+    _markersManager?.clearAll();
     super.dispose();
-  }
-}
-
-class _MapControlStack extends StatelessWidget {
-  final Widget topButton;
-  final Widget bottomButton;
-
-  const _MapControlStack({required this.topButton, required this.bottomButton});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [topButton, const SizedBox(height: 10), bottomButton],
-    );
-  }
-}
-
-class _MapCircleButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _MapCircleButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: cs.surface,
-      shape: const CircleBorder(),
-      elevation: 4,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Tooltip(
-          message: tooltip,
-          child: SizedBox(
-            width: 46,
-            height: 46,
-            child: Icon(icon, color: cs.onSurface),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MapTypeTile extends StatelessWidget {
-  final String title;
-  final bool selected;
-  final ColorScheme colorScheme;
-  final VoidCallback onTap;
-
-  const _MapTypeTile({
-    required this.title,
-    required this.selected,
-    required this.colorScheme,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: SizedBox(
-        width: 96,
-        child: Column(
-          children: [
-            Container(
-              width: 86,
-              height: 58,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors:
-                      selected
-                          ? [const Color(0xFF81D4FA), const Color(0xFFB2DFDB)]
-                          : [const Color(0xFFCFD8DC), const Color(0xFFECEFF1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(
-                  color:
-                      selected
-                          ? colorScheme.primary
-                          : colorScheme.outline.withValues(alpha: 0.35),
-                  width: selected ? 2.2 : 1,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: selected ? colorScheme.primary : colorScheme.onSurface,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MapTypeGrid extends StatelessWidget {
-  final Map<String, String> options;
-  final String selectedStyle;
-  final ValueChanged<String> onSelect;
-
-  const _MapTypeGrid({
-    required this.options,
-    required this.selectedStyle,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = options.entries.toList();
-    return Row(
-      children: [
-        for (var index = 0; index < entries.length; index++) ...[
-          Expanded(
-            child: _MapTypeTile(
-              title: entries[index].key,
-              selected: selectedStyle == entries[index].value,
-              colorScheme: Theme.of(context).colorScheme,
-              onTap: () => onSelect(entries[index].value),
-            ),
-          ),
-          if (index < entries.length - 1) const SizedBox(width: 12),
-        ],
-      ],
-    );
-  }
-}
-
-class _MapDetailsGrid extends StatelessWidget {
-  final bool showPublicTransport;
-  final bool showTraffic;
-  final VoidCallback onTogglePublicTransport;
-  final VoidCallback onToggleTraffic;
-
-  const _MapDetailsGrid({
-    required this.showPublicTransport,
-    required this.showTraffic,
-    required this.onTogglePublicTransport,
-    required this.onToggleTraffic,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: 14,
-      runSpacing: 14,
-      children: [
-        _MapDetailTile(
-          title: 'Public\ntransport',
-          selected: showPublicTransport,
-          icon: Icons.directions_transit_rounded,
-          colorScheme: cs,
-          onTap: onTogglePublicTransport,
-        ),
-        _MapDetailTile(
-          title: 'Traffic',
-          selected: showTraffic,
-          icon: Icons.traffic_rounded,
-          colorScheme: cs,
-          onTap: onToggleTraffic,
-        ),
-      ],
-    );
-  }
-}
-
-class _MapDetailTile extends StatelessWidget {
-  final String title;
-  final bool selected;
-  final IconData icon;
-  final ColorScheme colorScheme;
-  final VoidCallback onTap;
-
-  const _MapDetailTile({
-    required this.title,
-    required this.selected,
-    required this.icon,
-    required this.colorScheme,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: SizedBox(
-        width: 104,
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color:
-                    selected
-                        ? colorScheme.primaryContainer
-                        : colorScheme.surfaceContainerHighest,
-                border: Border.all(
-                  color:
-                      selected
-                          ? colorScheme.primary
-                          : colorScheme.outline.withValues(alpha: 0.35),
-                  width: selected ? 2.2 : 1,
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: selected ? colorScheme.primary : colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: selected ? colorScheme.primary : colorScheme.onSurface,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MissingTokenView extends StatelessWidget {
-  const _MissingTokenView();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          width: 560,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: cs.errorContainer.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: cs.error.withValues(alpha: 0.35)),
-          ),
-          child: const Text(
-            'Mapbox token is missing. Add your public token to the .env file in the project root.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
   }
 }
