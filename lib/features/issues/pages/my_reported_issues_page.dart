@@ -55,17 +55,19 @@ class MyReportedIssuesPage extends StatelessWidget {
               if (ctrl.myIssues.isNotEmpty) ...[
                 _SectionHeader(title: 'My Reports', count: ctrl.myIssues.length),
                 const SizedBox(height: 10),
-                ...ctrl.myIssues.asMap().entries.map((e) =>
-                  _IssueCard(doc: e.value, isDuplicate: false)
-                    .animate(delay: (e.key * 45).ms).fadeIn().slideX(begin: 0.05)),
+                _IssuesGrid(
+                  docs: ctrl.myIssues,
+                  isDuplicate: false,
+                ),
               ],
               if (ctrl.duplicateIssues.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 _SectionHeader(title: 'Also Reported', count: ctrl.duplicateIssues.length, subtitle: 'Issues you confirmed seeing'),
                 const SizedBox(height: 10),
-                ...ctrl.duplicateIssues.asMap().entries.map((e) =>
-                  _IssueCard(doc: e.value, isDuplicate: true)
-                    .animate(delay: (e.key * 45).ms).fadeIn().slideX(begin: 0.05)),
+                _IssuesGrid(
+                  docs: ctrl.duplicateIssues,
+                  isDuplicate: true,
+                ),
               ],
             ],
           );
@@ -197,93 +199,95 @@ class _IssueCard extends StatelessWidget {
     final statusColor = _statusColor(status);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      constraints: const BoxConstraints(minHeight: AppDimensions.issueCardMinHeight),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: cs.shadow.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: cs.shadow.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: InkWell(
         onTap: () => Get.to(() => IssueDetailCitizenPage(issueId: issueId)),
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 72, height: 72,
-                  child: previewUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: previewUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
-                          errorWidget: (_, __, ___) => Container(color: cs.surfaceContainerHighest,
-                              child: Icon(Icons.image_outlined, color: cs.onSurfaceVariant)),
-                        )
-                      : Container(color: cs.surfaceContainerHighest,
-                          child: Icon(Icons.report_outlined, color: cs.onSurfaceVariant, size: 30)),
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.cardRadius)),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: previewUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: previewUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
+                        errorWidget: (_, __, ___) => Container(
+                          color: cs.surfaceContainerHighest,
+                          child: Icon(Icons.image_outlined, color: cs.onSurfaceVariant),
+                        ),
+                      )
+                    : Container(
+                        color: cs.surfaceContainerHighest,
+                        child: Icon(Icons.report_outlined, color: cs.onSurfaceVariant, size: 34),
+                      ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Expanded(
-                          child: Text((issue['categoryId'] ?? 'UNKNOWN').toString().toUpperCase(),
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            (issue['categoryId'] ?? 'UNKNOWN').toString().toUpperCase(),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 11.5),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        if (isDuplicate) _DuplicateBadge(),
+                        if (isDuplicate) const _DuplicateBadge(),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    SizedBox(
-                      height: AppDimensions.twoLineTextHeight,
+                    Expanded(
                       child: Text(
                         issue['description'] ?? '',
-                        style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant),
-                        maxLines: 2,
+                        style: GoogleFonts.inter(fontSize: 11.5, color: cs.onSurfaceVariant, height: 1.25),
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor.withOpacity(0.3)),
-                          ),
-                          child: Text(status.toUpperCase(), style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w800, color: statusColor)),
-                        ),
-                        const Spacer(),
-                        Text(
-                          _createdText(issue['createdAt']),
-                          style: GoogleFonts.inter(fontSize: 10, color: cs.onSurfaceVariant),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: GoogleFonts.inter(fontSize: 8.8, fontWeight: FontWeight.w800, color: statusColor),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _createdText(issue['createdAt']),
+                      style: GoogleFonts.inter(fontSize: 10, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant, size: 20),
-            ],
-          ),
+            ),
+          ]
         ),
       ),
     );
@@ -313,13 +317,41 @@ class _IssueCard extends StatelessWidget {
 }
 
 class _DuplicateBadge extends StatelessWidget {
+  const _DuplicateBadge();
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(color: cs.secondaryContainer, borderRadius: BorderRadius.circular(8)),
-      child: Text('Also Reported', style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: cs.onSecondaryContainer)),
+      child: Text('Also', style: GoogleFonts.inter(fontSize: 8.4, fontWeight: FontWeight.w700, color: cs.onSecondaryContainer)),
+    );
+  }
+}
+
+class _IssuesGrid extends StatelessWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+  final bool isDuplicate;
+
+  const _IssuesGrid({required this.docs, required this.isDuplicate});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: docs.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.77,
+      ),
+      itemBuilder: (_, index) {
+        final card = _IssueCard(doc: docs[index], isDuplicate: isDuplicate);
+        return card.animate(delay: (index * 35).ms).fadeIn().slideY(begin: 0.05);
+      },
     );
   }
 }
@@ -355,12 +387,20 @@ class _ShimmerList extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: cs.surfaceContainerHighest,
       highlightColor: cs.surface,
-      child: ListView.builder(
+      child: GridView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-        itemCount: 7,
+        itemCount: 8,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.77,
+        ),
         itemBuilder: (_, __) => Container(
-          height: AppDimensions.issueCardMinHeight, margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
         ),
       ),
     );

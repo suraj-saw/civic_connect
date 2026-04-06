@@ -83,9 +83,15 @@ class HomeAdminPage extends StatelessWidget {
 
                   return RefreshIndicator(
                     onRefresh: () async => ctrl.refreshIssues(),
-                    child: ListView.builder(
+                    child: GridView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
                       itemCount: ctrl.filteredIssues.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.72,
+                      ),
                       itemBuilder: (context, i) {
                         final doc = ctrl.filteredIssues[i];
                         final data = doc.data();
@@ -530,8 +536,6 @@ class _AdminIssueCard extends StatelessWidget {
     })();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      constraints: const BoxConstraints(minHeight: AppDimensions.issueCardMinHeight),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
@@ -553,126 +557,81 @@ class _AdminIssueCard extends StatelessWidget {
           ),
         ),
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 72,
-                  height: 72,
-                  child: previewUrl != null
-                      ? CachedNetworkImage(
-                    imageUrl: previewUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(color: cs.surfaceContainerHighest),
-                    errorWidget: (_, __, ___) => Container(
-                      color: cs.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: cs.onSurfaceVariant,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.cardRadius)),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: previewUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: previewUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(color: cs.surfaceContainerHighest),
+                        errorWidget: (_, __, ___) => Container(
+                          color: cs.surfaceContainerHighest,
+                          child: Icon(Icons.image_outlined, color: cs.onSurfaceVariant),
+                        ),
+                      )
+                    : Container(
+                        color: cs.surfaceContainerHighest,
+                        child: Icon(Icons.report_outlined, color: cs.onSurfaceVariant, size: 34),
                       ),
-                    ),
-                  )
-                      : Container(
-                    color: cs.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.report_outlined,
-                      color: cs.onSurfaceVariant,
-                      size: 30,
-                    ),
-                  ),
-                ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            (data['categoryId'] ?? 'UNKNOWN')
-                                .toString()
-                                .toUpperCase(),
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        _StatusPill(status: status, color: statusColor),
-                      ],
+                    Text(
+                      (data['categoryId'] ?? 'UNKNOWN').toString().toUpperCase(),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 11.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    SizedBox(
-                      height: AppDimensions.twoLineTextHeight,
+                    Expanded(
                       child: Text(
-                        data['description'] ?? '',
+                        (data['description'] ?? '').toString(),
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           color: cs.onSurfaceVariant,
+                          height: 1.25,
                         ),
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(height: 6),
+                    _StatusPill(status: status, color: statusColor),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(
-                          Icons.copy_outlined,
-                          size: 13,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$duplicateReportCount report${duplicateReportCount == 1 ? '' : 's'}',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: cs.onSurfaceVariant,
-                        ),
+                        Icon(Icons.copy_outlined, size: 12, color: cs.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            data['reporterEmail'] ?? '',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: cs.onSurfaceVariant,
-                            ),
+                            '$duplicateReportCount report${duplicateReportCount == 1 ? '' : 's'}',
+                            style: GoogleFonts.inter(fontSize: 10.5, color: cs.onSurfaceVariant),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _createdText(data['createdAt']),
-                          style: GoogleFonts.inter(fontSize: 10, color: cs.onSurfaceVariant),
-                        ),
                       ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _createdText(data['createdAt']),
+                      style: GoogleFonts.inter(fontSize: 10, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: cs.onSurfaceVariant,
-                size: 20,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -719,17 +678,19 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactLabel = status.replaceAll('-', ' ').toUpperCase();
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        status.toUpperCase(),
+        compactLabel,
         style: GoogleFonts.inter(
-          fontSize: 10,
+          fontSize: 8.8,
           fontWeight: FontWeight.w800,
           color: color,
         ),
@@ -799,12 +760,16 @@ class _ShimmerList extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: cs.surfaceContainerHighest,
       highlightColor: cs.surface,
-      child: ListView.builder(
+      child: GridView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-        itemCount: 6,
+        itemCount: 8,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.72,
+        ),
         itemBuilder: (_, __) => Container(
-          height: AppDimensions.issueCardMinHeight,
-          margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(18),
