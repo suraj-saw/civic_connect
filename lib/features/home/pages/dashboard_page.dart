@@ -84,6 +84,16 @@ class DashboardPage extends StatelessWidget {
             onTap: () => Get.toNamed(AppRoutes.myIssues),
           ).animate(delay: 200.ms).fadeIn().slideX(begin: 0.06),
 
+          const SizedBox(height: 12),
+          _ActionCard(
+            icon: Icons.analytics_outlined,
+            iconBgColor: cs.tertiaryContainer,
+            iconColor: cs.onTertiaryContainer,
+            title: 'My Insights',
+            subtitle: 'View trends across your reported civic issues',
+            onTap: () => Get.toNamed(AppRoutes.citizenAnalytics),
+          ).animate(delay: 230.ms).fadeIn().slideX(begin: 0.06),
+
           const SizedBox(height: 28),
           Text('How it Works', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16, color: cs.onSurface))
               .animate().fadeIn(delay: 250.ms),

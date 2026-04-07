@@ -3,6 +3,8 @@ import 'package:civic_connect/features/auth/pages/sign_up_page.dart';
 import 'package:civic_connect/features/auth/pages/verify_otp_page.dart';
 import 'package:civic_connect/features/auth/pages/forgot_password_page.dart';
 import 'package:civic_connect/features/auth/bindings/auth_binding.dart';
+import 'package:civic_connect/features/analytics/pages/admin_analytics_page.dart';
+import 'package:civic_connect/features/analytics/pages/citizen_analytics_page.dart';
 import 'package:civic_connect/features/home/pages/home_citizen_page.dart';
 import 'package:civic_connect/features/home/bindings/home_binding.dart';
 import 'package:civic_connect/features/issues/pages/report_issue_page.dart';
@@ -83,6 +85,16 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminChatbot,
       page: () => const Scaffold(body: AdminChatbotPage()),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.citizenAnalytics,
+      page: () => const CitizenAnalyticsPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.adminAnalytics,
+      page: () => const AdminAnalyticsPage(),
       transition: Transition.rightToLeft,
     ),
   ];

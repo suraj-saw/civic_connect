@@ -14,6 +14,8 @@ class AppRoutes {
   static const String issueDetail = '/issueDetail/:id';
   static const String citizenChatbot = '/citizenChatbot';
   static const String adminChatbot = '/adminChatbot';
+  static const String citizenAnalytics = '/citizenAnalytics';
+  static const String adminAnalytics = '/adminAnalytics';
 
   static Future<dynamic> goToSignIn() => Future.value(signIn);
   static Future<dynamic> goToHomeCitizen() => Future.value(homeCitizen);
@@ -23,4 +25,6 @@ class AppRoutes {
   static Future<dynamic> goToForgotPassword() => Future.value(forgotPassword);
   static Future<dynamic> goToCitizenChatbot() => Future.value(citizenChatbot);
   static Future<dynamic> goToAdminChatbot() => Future.value(adminChatbot);
+  static Future<dynamic> goToCitizenAnalytics() => Future.value(citizenAnalytics);
+  static Future<dynamic> goToAdminAnalytics() => Future.value(adminAnalytics);
 }

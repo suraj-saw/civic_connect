@@ -65,6 +65,14 @@ class AdminDrawer extends StatelessWidget {
                   Get.toNamed(AppRoutes.adminChatbot);
                 },
               ).animate(delay: 80.ms).fadeIn().slideX(begin: -0.06),
+              _DrawerItem(
+                icon: Icons.analytics_rounded,
+                label: 'Analytics',
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.toNamed(AppRoutes.adminAnalytics);
+                },
+              ).animate(delay: 90.ms).fadeIn().slideX(begin: -0.06),
 
               const Spacer(),
               const Divider(indent: 16, endIndent: 16),
