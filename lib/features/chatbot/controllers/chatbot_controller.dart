@@ -269,7 +269,7 @@ Guidelines:
       messages.add(streamingMessage);
 
       final buffer = StringBuffer();
-      await for (final chunk in _openAIService.streamChatCompletion(apiMessages..removeLast())) {
+      await for (final chunk in _openAIService.streamChatCompletion(apiMessages)) {
         buffer.write(chunk);
         // Update the last message in-place
         messages[messages.length - 1] = ChatMessage.assistant(buffer.toString());

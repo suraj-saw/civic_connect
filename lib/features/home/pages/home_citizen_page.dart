@@ -8,6 +8,7 @@ import '../../notifications/pages/notification_page.dart';
 import '../controllers/home_citizen_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../chatbot/pages/chatbot_page.dart';
 import 'dashboard_page.dart';
 import 'map_page.dart';
 
@@ -24,7 +25,12 @@ class HomeCitizenPage extends StatelessWidget {
         : Get.put(NotificationController());
     final cs = Theme.of(context).colorScheme;
 
-    final screens = [const DashboardPage(), const MapPage(), ProfilePage()];
+    final screens = [
+      const DashboardPage(),
+      const MapPage(),
+      const ChatbotPage(),
+      ProfilePage(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -62,6 +68,7 @@ class HomeCitizenPage extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map_rounded), label: 'Map'),
+          NavigationDestination(icon: Icon(Icons.smart_toy_outlined), selectedIcon: Icon(Icons.smart_toy_rounded), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       )),

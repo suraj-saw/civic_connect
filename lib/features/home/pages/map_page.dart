@@ -23,13 +23,18 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   static final _initialDelhi = Point(coordinates: Position(77.2090, 28.6139));
   static final _publicToken = MapboxConstants.publicToken;
+  static const _standardStyleUri = 'mapbox://styles/mapbox/standard';
+  static const _streetsStyleUri = 'mapbox://styles/mapbox/streets-v12';
+  static const _satelliteStreetsStyleUri =
+      'mapbox://styles/mapbox/satellite-streets-v12';
+  static const _outdoorsStyleUri = 'mapbox://styles/mapbox/outdoors-v12';
   static const _trafficStyleUri = 'mapbox://styles/mapbox/navigation-day-v1';
   static const _startupCurrentLocationDelay = Duration(milliseconds: 900);
 
   final Map<String, String> _primaryTypeOptions = const {
-    'Default': MapboxStyles.STANDARD,
-    'Satellite': MapboxStyles.SATELLITE,
-    'Terrain': MapboxStyles.OUTDOORS,
+    'Default': _streetsStyleUri,
+    'Satellite': _satelliteStreetsStyleUri,
+    'Terrain': _outdoorsStyleUri,
   };
 
   MapboxMap? _mapboxMap;
@@ -134,8 +139,11 @@ class _MapPageState extends State<MapPage> {
   }
 
   String get _resolvedStyleUri {
-    if (_showTraffic && _selectedStyle != MapboxStyles.SATELLITE) {
+    if (_showTraffic && _selectedStyle != _satelliteStreetsStyleUri) {
       return _trafficStyleUri;
+    }
+    if (!_showPublicTransport && _selectedStyle == _streetsStyleUri) {
+      return _standardStyleUri;
     }
     return _selectedStyle;
   }
@@ -364,7 +372,7 @@ class _MapPageState extends State<MapPage> {
                         fontSize: 13.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     MapTypeGrid(
                       options: _primaryTypeOptions,
                       selectedStyle: _selectedStyle,
@@ -373,7 +381,7 @@ class _MapPageState extends State<MapPage> {
                         setModalState(() {});
                       },
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
                     const Divider(height: 1),
                     const SizedBox(height: 16),
                     Text(
@@ -392,6 +400,7 @@ class _MapPageState extends State<MapPage> {
                           () => _showPublicTransport = !_showPublicTransport,
                         );
                         setModalState(() {});
+                        _applyResolvedStyle();
                       },
                       onToggleTraffic: () async {
                         setState(() => _showTraffic = !_showTraffic);

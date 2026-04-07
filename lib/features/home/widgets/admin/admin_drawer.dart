@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../controllers/home_admin_controller.dart';
 
 class AdminDrawer extends StatelessWidget {
@@ -56,6 +57,14 @@ class AdminDrawer extends StatelessWidget {
               const SizedBox(height: 12),
               _DrawerItem(icon: Icons.dashboard_rounded, label: 'Dashboard', onTap: () => Navigator.pop(context))
                   .animate(delay: 50.ms).fadeIn().slideX(begin: -0.06),
+              _DrawerItem(
+                icon: Icons.smart_toy_rounded,
+                label: 'CivicBot Admin',
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.toNamed(AppRoutes.adminChatbot);
+                },
+              ).animate(delay: 80.ms).fadeIn().slideX(begin: -0.06),
 
               const Spacer(),
               const Divider(indent: 16, endIndent: 16),

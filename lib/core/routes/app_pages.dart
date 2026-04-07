@@ -9,6 +9,10 @@ import 'package:civic_connect/features/issues/pages/report_issue_page.dart';
 import 'package:civic_connect/features/issues/pages/my_reported_issues_page.dart';
 import 'package:civic_connect/features/issues/pages/issue_detail_citizen_page.dart';
 import 'package:civic_connect/features/issues/bindings/issue_binding.dart';
+import 'package:civic_connect/features/chatbot/bindings/chatbot_binding.dart';
+import 'package:civic_connect/features/chatbot/pages/chatbot_page.dart';
+import 'package:civic_connect/features/chatbot/pages/admin_chatbot_page.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../features/home/pages/home_admin.dart';
 import 'app_routes.dart';
@@ -68,6 +72,17 @@ class AppPages {
         final issueId = Get.parameters['id'] ?? '';
         return IssueDetailCitizenPage(issueId: issueId);
       },
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.citizenChatbot,
+      page: () => const Scaffold(body: ChatbotPage()),
+      binding: ChatbotBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.adminChatbot,
+      page: () => const Scaffold(body: AdminChatbotPage()),
       transition: Transition.rightToLeft,
     ),
   ];

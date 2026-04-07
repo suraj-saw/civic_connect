@@ -163,7 +163,7 @@ Guidelines:
       messages.add(ChatMessage.assistant(''));
 
       final buffer = StringBuffer();
-      await for (final chunk in _openAIService.streamChatCompletion(apiMessages..removeLast())) {
+      await for (final chunk in _openAIService.streamChatCompletion(apiMessages)) {
         buffer.write(chunk);
         messages[messages.length - 1] = ChatMessage.assistant(buffer.toString());
         streamingText.value = buffer.toString();
