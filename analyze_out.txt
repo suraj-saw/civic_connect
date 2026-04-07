@@ -1,0 +1,24 @@
+﻿Analyzing 3 items...                                            
+
+warning - Unused import: 'package:flutter_animate/flutter_animate.dart' - lib\features\chatbot\pages\admin_chatbot_page.dart:2:8 - unused_import
+   info - Statements in a for should be enclosed in a block - lib\features\notifications\controllers\notification_controller.dart:111:36 - curly_braces_in_flow_control_structures
+
+flutter : 2 issues 
+found. (ran in 2.5s)
+At line:1 char:1
++ flutter analyze 
+lib/features/chatbot lib/
+data/services/openai_serv
+ice ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  (2 issues found. (ra   
+ n in 2.5s):String) [    
+], RemoteException
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 

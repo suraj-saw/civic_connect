@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "222697904239",
+    "firebase_url": "https://civic-connect-857f9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "civic-connect-857f9",
+    "storage_bucket": "civic-connect-857f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222697904239:android:03cb611b99320bd71d159a",
+        "android_client_info": {
+          "package_name": "com.example.civic_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA88neGB7IZiRakg7yJenfeHXFrJDEsCPw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
