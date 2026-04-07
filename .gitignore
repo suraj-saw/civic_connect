@@ -49,3 +49,16 @@ app.*.map.json
 .env
 .env.local
 .env.*.local
+
+# Secrets and credentials (do not commit)
+/android/key.properties
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
+*.keystore
+*.jks
+
+# Local diagnostics and reports
+analyze_out*.txt
+analyze_output.txt
+chatbot_analyze.txt

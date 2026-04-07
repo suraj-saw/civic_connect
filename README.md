@@ -42,3 +42,24 @@ The map page includes style switching:
 - Satellite
 - Satellite Streets
 - Outdoors
+
+## Security and Secrets
+
+Do not commit secrets or machine-specific config to GitHub.
+
+Ignored sensitive files include:
+
+- `.env`
+- `android/local.properties`
+- `android/key.properties`
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+- `lib/firebase_options.dart`
+
+If a sensitive file was committed earlier, untrack it (keeps your local file):
+
+```bash
+git rm --cached android/app/google-services.json lib/firebase_options.dart
+```
+
+Then rotate any leaked tokens/keys in provider dashboards and regenerate Firebase config locally as needed.
