@@ -118,6 +118,91 @@ The implementation stack and project materials are summarized below.
 - Environment-variable based configuration (`.env`) for secure keys (e.g., Mapbox, OpenAI).
 - Project assets for app identity and map issue markers.
 
+### 4.2.1 Data Flow Diagrams (DFDs)
+
+The following DFDs summarize the end-to-end civic complaint flow at multiple abstraction levels.
+
+#### DFD Level 0 — Context Diagram
+
+```mermaid
+flowchart LR
+    C[Citizen] -->|Register/Login, Report Issue, Track Status| S((Civic Connect System))
+    S -->|Issue IDs, Status Updates, Notifications| C
+
+    A[Municipal Admin] -->|Review Assigned Issues, Update Status, Resolve| S
+    S -->|Issue Queue, Citizen Evidence, Analytics| A
+
+    F[(Firebase Services
+Auth / Firestore / Storage)] <--> S
+    O[OpenAI API] <--> S
+```
+
+#### DFD Level 1 — Major Process Decomposition
+
+```mermaid
+flowchart LR
+    CIT[Citizen] -->|Credentials/Profile| P1((1.0 User Authentication 
+& Role Routing))
+    P1 --> D1[(D1 Users)]
+    P1 -->|Auth Status + Role| CIT
+
+    CIT -->|Complaint Details + Media + Location| P2((2.0 Issue Reporting 
+& Evidence Capture))
+    P2 --> D3[(D3 Media Storage)]
+    P2 -->|Structured Complaint| P3((3.0 Duplicate Detection 
+& Assignment))
+
+    P3 -->|Assigned/Linked Issue| P4((4.0 Issue Tracking 
+& Resolution))
+    P4 --> D2[(D2 Issues)]
+
+    ADM[Municipal Admin] -->|Review/Update Actions| P4
+    P4 -->|Status/Timeline Updates| CIT
+
+    P4 --> P5((5.0 Analytics, Notifications 
+& Chatbot))
+    P5 --> D4[(D4 Notifications/Derived Metrics)]
+    P5 --> OAI[OpenAI API]
+    P5 -->|Alerts / Insights| ADM
+```
+
+#### DFD Level 2 — Detailed Internal Flow (Issue Lifecycle)
+
+```mermaid
+flowchart TD
+    ADM[Municipal Admin] --> P42((4.2 Status & Timeline Update))
+    ADM --> P43((4.3 Resolution Evidence Upload))
+
+    CIT[Citizen] --> P21((2.1 Capture Description & Category))
+    CIT --> P22((2.2 Capture Media 
+Photo/Video/Audio))
+    CIT --> P23((2.3 Capture GPS Location))
+    P22 --> P24((2.4 Compress & Upload Media))
+
+    D1[(D1 Users)] -->|user identity| P25((2.5 Build Structured Issue Payload))
+    P21 --> P25
+    P23 --> P25
+    P24 --> P25
+    P24 --> D3[(D3 Media Storage)]
+
+    P25 --> P31((3.1 Fetch Nearby Same-Category Issues))
+    P31 --> P32((3.2 Distance + Similarity Check))
+    P32 -->|Duplicate found| P33((3.3 Duplicate Merge / Counter Update))
+    P32 -->|No duplicate| P34((3.4 Department Assignment))
+    P34 --> P35((3.5 Create New Issue Record))
+
+    P33 --> D2[(D2 Issues)]
+    P35 --> D2
+
+    D2 --> P41((4.1 Admin Issue Queue View))
+    D2 --> P44((4.4 Citizen Tracking View))
+
+    P42 --> P45((4.5 Notification Dispatch))
+    P43 --> P42
+    P45 --> D4[(D4 Notifications)]
+    P45 --> CIT
+```
+
 ### 4.3 Step-by-Step Process
 
 The project moved from problem discovery to implementation through the following phases.
@@ -241,50 +326,72 @@ The project demonstrates that civic complaints can be transformed from fragmente
 - status/timeline visibility improves transparency,
 - and role-specific dashboards support ownership and response flow.
 
-### 5.2 Data Visualization
+### 5.2 Data Visualization (Evidence from Live App Screens)
 
-Since this report section documents implementation-stage outcomes, the most appropriate visualizations are **system-output summaries** generated from app data (Firestore collections and issue metadata). The following tables and chart templates can be included directly in the report.
+This section replaces placeholder/sample tables with direct visual evidence captured from the running CivicConnect application.
 
-#### Table 5.1 — Feature Outcome Matrix
+#### 5.2.1 Citizen-Side Workflow Evidence
 
-| Objective from Section 3 | Implemented Mechanism | Observable Result |
-|---|---|---|
-| Centralized reporting | Single report-issue workflow | Complaints submitted through one structured channel |
-| Better evidence quality | Mandatory photo + optional video/audio + GPS capture | Increased verifiability of field complaints |
-| Department ownership | Assigned department field and admin issue streams | Clear departmental responsibility for each case |
-| Real-time tracking | Status + timeline + user issue streams | Citizens can track complaint progress |
-| Reduced duplication | Radius/category duplicate detection and counters | Lower repeated complaint noise |
+**Figure 5.1 — Citizen Dashboard (Quick Actions + workflow entry points)**  
+Shows live dashboard tiles for **Report an Issue**, **My Reported Issues**, and **My Insights**, confirming role-aware citizen navigation.
 
-#### Table 5.2 — Lifecycle Output Indicators (Report-ready Template)
+**Figure 5.2 — Map View with geospatial context**  
+Demonstrates location-based issue interaction and map-centric visibility using in-app map rendering.
 
-> Replace the sample values below with your final project dataset values before submission.
+**Figure 5.3 — Report Issue form (structured capture + precise location)**  
+Shows mandatory structured inputs (description, category) and captured coordinates/location card for accountable submissions.
 
-| Indicator | Description | Sample Snapshot Value* |
-|---|---|---:|
-| Total issues logged | Number of issue documents created | 120 |
-| Issues with valid location | Issues containing latitude/longitude fields | 112 |
-| Issues with photo evidence | Issues containing at least one image URL | 118 |
-| Potential duplicates merged | Reports linked via duplicate logic | 27 |
-| In-progress + resolved issues | Issues moved beyond initial reported state | 84 |
+**Figure 5.4 — Evidence attachment pipeline (photo/video/voice)**  
+Confirms multimodal evidence collection before submission.
 
-\*Sample values are placeholders to demonstrate report format.
+**Figure 5.5 — Submission progress screen**  
+Shows staged upload workflow (details saved → media upload → finalization), indicating resilient async processing.
 
-#### Table 5.3 — Status Distribution Template
+**Figure 5.6 — My Reported Issues (personal case list)**  
+Displays real user-side case history with cards and timestamps.
 
-| Status | Count (Example) | Interpretation |
-|---|---:|---|
-| Reported | 36 | Newly filed or awaiting assignment |
-| Assigned | 24 | Ownership established |
-| In Progress | 31 | Active field/department processing |
-| Resolved | 29 | Closed with action completed |
+#### 5.2.2 Real In-App Metrics (from Analytics/Issue Screens)
 
-#### Suggested Graphs/Figures for Final Report
+**Figure 5.7 — My Analytics screen (actual values)**  
+Observed values in the screenshot:
+- Total reports: **4**
+- Resolved: **0**
+- Open: **4**
+- Resolution rate: **0.0%**
+- Avg resolve time: **0.0h**
+- Avg duplicates: **1.0**
+- Top categories: **road (3)**, **water (1)**
+- Status distribution: Reported **4**, In Progress **0**, Reopened **0**, Resolved **0**, Rejected **0**
 
-1. **Bar chart:** Number of issues by status (Reported/Assigned/In Progress/Resolved).
-2. **Pie chart:** Category-wise issue distribution (roads, sanitation, drainage, lighting, etc.).
-3. **Line chart:** Weekly trend of new complaints vs. resolved complaints.
-4. **Stacked bar chart:** Department-wise workload and closure progress.
-5. **Map heat visualization:** Spatial concentration of complaints by locality.
+These are direct app-rendered values (not synthetic placeholders).
+
+#### 5.2.3 Admin-Side Workflow Evidence
+
+**Figure 5.8 — Admin Panel queue snapshot (Electricity department)**  
+Shows departmental queue, searchable list, and aggregate counters (Visible/In Progress/Urgent).
+
+**Figure 5.9 — Admin Issue Details**  
+Shows case metadata (category, reporter, timestamp), location coordinates, and attached evidence preview.
+
+**Figure 5.10 — Resolution proof submission dialog**  
+Demonstrates requirement to upload at least one photo as completion evidence
+
+**Figure 5.11 — Status timeline after admin actions**  
+Shows real lifecycle progression with timestamps:
+- Reported: **29 Apr 2026, 11:51 AM**
+- In-Progress: **29 Apr 2026, 11:52 AM**
+- Resolved: **29 Apr 2026, 11:54 AM**
+
+#### 5.2.4 Trust, Identity, and Assistant Evidence
+
+**Figure 5.12 — Login screen**  
+Confirms authenticated system access pathway.
+
+**Figure 5.13 — Profile screen (citizen account details)**  
+Shows role badge and verified account metadata.
+
+**Figure 5.14 — CivicBot interaction evidence**  
+Demonstrates assistant context-awareness; bot response references user-specific report count (**4 issues**).
 
 These visuals directly support interpretation of whether the system improved structure, ownership, and closure behavior.
 
