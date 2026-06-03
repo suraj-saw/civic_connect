@@ -20,7 +20,7 @@ Color statusColorFor(String? status) {
 }
 
 String formatTimestamp(dynamic ts) {
-  if (ts is Timestamp) return DateFormat('MMM dd, yyyy • hh:mm a').format(ts.toDate());
+  if (ts is Timestamp) return DateFormat('MMM dd, yyyy * hh:mm a').format(ts.toDate());
   return 'N/A';
 }
 
@@ -37,7 +37,7 @@ class AdminIssueHeaderSection extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +48,7 @@ class AdminIssueHeaderSection extends StatelessWidget {
             const SizedBox(width: 8),
             _StatusChip(status: status),
           ]),
-          Divider(height: 20, color: cs.outline.withOpacity(0.12)),
+          Divider(height: 20, color: cs.outline.withValues(alpha: 0.12)),
           Text(data['description'] ?? 'No description', style: GoogleFonts.inter(fontSize: 14, height: 1.5)),
           const SizedBox(height: 14),
           _row(context, Icons.person_outline_rounded, data['reporterEmail'] ?? 'Unknown'),
@@ -94,7 +94,7 @@ class AdminIssueLocationSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +135,7 @@ class AdminIssueMediaSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +224,7 @@ class AdminIssueTimelineSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.12)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +244,7 @@ class AdminIssueTimelineSection extends StatelessWidget {
   Widget _buildItem(Map<String, dynamic> item) {
     final statusColor = statusColorFor(item['status']?.toString());
     final ts = item['timestamp'] as Timestamp?;
-    final dateStr = ts != null ? DateFormat('MMM dd, yyyy • hh:mm a').format(ts.toDate()) : 'N/A';
+    final dateStr = ts != null ? DateFormat('MMM dd, yyyy * hh:mm a').format(ts.toDate()) : 'N/A';
 
     return Builder(builder: (context) {
       final cs = Theme.of(context).colorScheme;
@@ -260,7 +260,7 @@ class AdminIssueTimelineSection extends StatelessWidget {
             const SizedBox(height: 2),
             Text(item['message']?.toString() ?? '', style: GoogleFonts.inter(fontSize: 13)),
             const SizedBox(height: 2),
-            Text('By: ${item['updatedByEmail'] ?? 'Unknown'}  •  $dateStr',
+            Text('By: ${item['updatedByEmail'] ?? 'Unknown'}  *  $dateStr',
                 style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
           ])),
         ]),
@@ -277,8 +277,9 @@ class _StatusChip extends StatelessWidget {
     final color = statusColorFor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.35))),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.35))),
       child: Text(status?.toUpperCase() ?? 'UNKNOWN', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
     );
   }
 }
+

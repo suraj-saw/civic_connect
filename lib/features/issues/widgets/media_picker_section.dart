@@ -5,7 +5,7 @@ import 'image_picker_section.dart';
 import 'video_picker_section.dart';
 
 class MediaPickerSection extends StatelessWidget {
-  const MediaPickerSection({Key? key}) : super(key: key);
+  const MediaPickerSection({super.key});
 
   @override
   Widget build(BuildContext context) {

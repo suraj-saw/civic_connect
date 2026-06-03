@@ -6,7 +6,7 @@ class MediaItemCard extends StatelessWidget {
   final String label;
   final String fileName;
   final VoidCallback onRemove;
-  const MediaItemCard({Key? key, required this.label, required this.fileName, required this.onRemove}) : super(key: key);
+  const MediaItemCard({super.key, required this.label, required this.fileName, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -15,15 +15,15 @@ class MediaItemCard extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: AppDimensions.compactCardMinHeight),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cs.primaryContainer.withOpacity(0.3),
+        color: cs.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        border: Border.all(color: cs.primary.withOpacity(0.3)),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: cs.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
             child: Icon(Icons.check_circle_rounded, color: cs.primary, size: 18),
           ),
           const SizedBox(width: 12),
@@ -42,3 +42,4 @@ class MediaItemCard extends StatelessWidget {
     );
   }
 }
+

@@ -43,7 +43,7 @@ class ReassignmentTimelinePage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: cs.surface, borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cs.outline.withOpacity(0.12)),
+                  border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
@@ -58,7 +58,7 @@ class ReassignmentTimelinePage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(data['reason'] ?? '', style: GoogleFonts.inter(fontSize: 13)),
                   const SizedBox(height: 6),
-                  Text('By: ${data['reassignedByEmail'] ?? 'Unknown'}  •  $dateStr',
+                  Text('By: ${data['reassignedByEmail'] ?? 'Unknown'}  *  $dateStr',
                       style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
                 ]),
               ).animate(delay: (i * 50).ms).fadeIn().slideY(begin: 0.05);
@@ -69,3 +69,4 @@ class ReassignmentTimelinePage extends StatelessWidget {
     );
   }
 }
+

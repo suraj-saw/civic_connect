@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 
 class SubmitButton extends GetView<ReportIssueController> {
-  const SubmitButton({Key? key}) : super(key: key);
+  const SubmitButton({super.key});
 
   @override
   Widget build(BuildContext context) {

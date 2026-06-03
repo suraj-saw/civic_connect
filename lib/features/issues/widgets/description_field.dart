@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 
 class DescriptionField extends GetView<ReportIssueController> {
-  const DescriptionField({Key? key}) : super(key: key);
+  const DescriptionField({super.key});
 
   @override
   Widget build(BuildContext context) {

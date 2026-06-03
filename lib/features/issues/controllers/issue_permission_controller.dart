@@ -35,8 +35,11 @@ class IssuePermissionController extends GetxController {
     if (status.isGranted) return true;
     final result = await Permission.camera.request();
     if (result.isGranted) return true;
-    if (result.isPermanentlyDenied) _showSettingsDialog('camera');
-    else AppSnackbar.show('Permission Denied', 'Camera permission is required.', snackPosition: SnackPosition.BOTTOM);
+    if (result.isPermanentlyDenied) {
+      _showSettingsDialog('camera');
+    } else {
+      AppSnackbar.show('Permission Denied', 'Camera permission is required.', snackPosition: SnackPosition.BOTTOM);
+    }
     return false;
   }
 
@@ -46,8 +49,11 @@ class IssuePermissionController extends GetxController {
     if (status.isGranted) return true;
     final result = await Permission.microphone.request();
     if (result.isGranted) return true;
-    if (result.isPermanentlyDenied) _showSettingsDialog('microphone');
-    else AppSnackbar.show('Permission Denied', 'Microphone permission is required.', snackPosition: SnackPosition.BOTTOM);
+    if (result.isPermanentlyDenied) {
+      _showSettingsDialog('microphone');
+    } else {
+      AppSnackbar.show('Permission Denied', 'Microphone permission is required.', snackPosition: SnackPosition.BOTTOM);
+    }
     return false;
   }
 

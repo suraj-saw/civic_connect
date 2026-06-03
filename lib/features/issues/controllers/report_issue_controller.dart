@@ -59,7 +59,7 @@ class ReportIssueController extends GetxController {
     if (status.isGranted && issueLocation.value == null) await _fetchLocation();
   }
 
-  // ─── IMAGE ───────────────────────────────────────────────────────────────
+  //  IMAGE 
 
   Future<void> pickImage() async {
     final img = await _picker.pickImage(
@@ -93,7 +93,7 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  // ─── VIDEO ───────────────────────────────────────────────────────────────
+  // VIDEO 
 
   Future<void> captureVideo() async {
     final vid = await _picker.pickVideo(
@@ -106,7 +106,6 @@ class ReportIssueController extends GetxController {
     selectedVideoPath.value = raw.path;
     isFormDirty.value = true;
 
-    // Compress in background immediately while user fills rest of form
     _videoCompressionFuture = MediaService.compressVideo(raw).then((compressed) {
       selectedVideo.value = compressed;
       selectedVideoPath.value = compressed.path;
@@ -123,7 +122,7 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  // ─── AUDIO ───────────────────────────────────────────────────────────────
+  //  AUDIO 
 
   Future<void> toggleAudioRecording() async {
     if (isRecording.value) {
@@ -163,7 +162,7 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  // ─── LOCATION ────────────────────────────────────────────────────────────
+  // LOCATION 
 
   Future<void> _fetchLocation() async {
     try {
@@ -235,7 +234,7 @@ class ReportIssueController extends GetxController {
     return completer.future;
   }
 
-  // ─── VALIDATION ──────────────────────────────────────────────────────────
+  //  VALIDATION
 
   bool _validateFieldsOnly() {
     if (description.value.trim().isEmpty) {
@@ -256,7 +255,7 @@ class ReportIssueController extends GetxController {
     return true;
   }
 
-  // ─── DUPLICATE CHECK ─────────────────────────────────────────────────────
+  //  DUPLICATE CHECK
 
   Future<DuplicateCheckResult?> _checkForDuplicate() async {
     final location = issueLocation.value;
@@ -287,7 +286,7 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  // ─── SUBMIT ENTRY POINT ──────────────────────────────────────────────────
+  //  SUBMIT ENTRY POINT
 
   Future<void> submitIssue() async {
     if (!_validateFieldsOnly()) return;
@@ -342,7 +341,7 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  // ─── CORE SUBMIT ─────────────────────────────────────────────────────────
+  // CORE SUBMIT
 
   Future<void> _doSubmit() async {
     isSubmitting.value = true;
@@ -363,8 +362,7 @@ class ReportIssueController extends GetxController {
         imageFiles.add(selectedImage.value!);
       }
 
-      // Use compute-based parallel compression for images (real isolate parallelism)
-      // Await video compression simultaneously — both run together
+
       final results = await Future.wait([
         MediaService.compressImages(imageFiles),        // isolate per image
         if (_videoCompressionFuture != null) _videoCompressionFuture!,
@@ -442,7 +440,7 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  // ─── HELPERS ─────────────────────────────────────────────────────────────
+  // HELPERS 
 
   void navigateCitizenToDashboard() {
     if (Get.isRegistered<HomeCitizenController>()) {

@@ -6,7 +6,7 @@ class MapCircleButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback onTap;
 
-  const MapCircleButton({
+  const MapCircleButton({super.key, 
     required this.icon,
     required this.tooltip,
     required this.onTap,
@@ -45,7 +45,7 @@ class MapControlStack extends StatelessWidget {
   final Widget topButton;
   final Widget bottomButton;
 
-  const MapControlStack({required this.topButton, required this.bottomButton});
+  const MapControlStack({super.key, required this.topButton, required this.bottomButton});
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +63,7 @@ class MapTypeTile extends StatelessWidget {
   final ColorScheme colorScheme;
   final VoidCallback onTap;
 
-  const MapTypeTile({
+  const MapTypeTile({super.key, 
     required this.title,
     required this.selected,
     required this.colorScheme,
@@ -103,7 +103,7 @@ class MapTypeGrid extends StatelessWidget {
   final String selectedStyle;
   final ValueChanged<String> onSelect;
 
-  const MapTypeGrid({
+  const MapTypeGrid({super.key, 
     required this.options,
     required this.selectedStyle,
     required this.onSelect,
@@ -139,7 +139,7 @@ class MapDetailTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool enabled;
 
-  const MapDetailTile({
+  const MapDetailTile({super.key, 
     required this.title,
     required this.selected,
     required this.icon,
@@ -212,7 +212,7 @@ class MapDetailsGrid extends StatelessWidget {
   final VoidCallback onTogglePublicTransport;
   final VoidCallback onToggleTraffic;
 
-  const MapDetailsGrid({
+  const MapDetailsGrid({super.key, 
     required this.showPublicTransport,
     required this.showTraffic,
     required this.onTogglePublicTransport,
@@ -415,7 +415,7 @@ class _MapTypePreview extends StatelessWidget {
 
 /// Placeholder shown when Mapbox token is missing
 class MissingTokenView extends StatelessWidget {
-  const MissingTokenView();
+  const MissingTokenView({super.key});
 
   @override
   Widget build(BuildContext context) {

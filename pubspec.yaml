@@ -67,6 +67,7 @@ dependencies:
   video_compress: ^3.1.4
   speech_to_text: ^7.3.0
   flutter_markdown: ^0.7.7+1
+  path: ^1.9.1
 
 
 dev_dependencies:

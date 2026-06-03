@@ -20,7 +20,7 @@ class ChatbotController extends GetxController {
   final _storage = GetStorage();
   final _picker = ImagePicker();
 
-  // ── State ──
+  // State
   final messages = <ChatMessage>[].obs;
   final isLoading = false.obs;
   final isStreaming = false.obs;
@@ -31,11 +31,11 @@ class ChatbotController extends GetxController {
   final hasText = false.obs;
   final streamingText = ''.obs;
 
-  // ── Voice ──
+  // Voice
   final stt.SpeechToText _speech = stt.SpeechToText();
   final speechAvailable = false.obs;
 
-  // ── User context ──
+  // User context
   String _userIssuesContext = '';
 
   static const List<String> quickSuggestions = [
@@ -103,9 +103,7 @@ Guidelines:
     super.onClose();
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Initialization
-  // ──────────────────────────────────────────────────────────────
+
 
   Future<void> _initSpeech() async {
     speechAvailable.value = await _speech.initialize(
@@ -222,18 +220,13 @@ Guidelines:
     ));
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Chat persistence
-  // ──────────────────────────────────────────────────────────────
 
   void _saveChatHistory() {
     final jsonList = messages.map((m) => m.toJson()).toList();
     _storage.write(_storageKey, jsonEncode(jsonList));
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Send message (streaming)
-  // ──────────────────────────────────────────────────────────────
+ 
 
   Future<void> sendMessage([String? overrideText]) async {
     final text = (overrideText ?? textController.text).trim();
@@ -302,9 +295,6 @@ Guidelines:
     }
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Image sending (vision)
-  // ──────────────────────────────────────────────────────────────
 
   Future<void> sendImage({required ImageSource source}) async {
     try {
@@ -385,9 +375,6 @@ Guidelines:
     }
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Voice input
-  // ──────────────────────────────────────────────────────────────
 
   Future<void> startListening() async {
     if (!speechAvailable.value) {
@@ -419,10 +406,6 @@ Guidelines:
     _speech.stop();
     isListening.value = false;
   }
-
-  // ──────────────────────────────────────────────────────────────
-  // Language switching
-  // ──────────────────────────────────────────────────────────────
 
   bool _handleLanguageSwitch(String text) {
     final lowerText = text.toLowerCase();
@@ -463,9 +446,6 @@ Guidelines:
     }
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Suggestions & actions
-  // ──────────────────────────────────────────────────────────────
 
   void sendSuggestion(String text) => sendMessage(text);
 
@@ -474,9 +454,6 @@ Guidelines:
     Get.toNamed(AppRoutes.reportIssue);
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Notification integration
-  // ──────────────────────────────────────────────────────────────
 
   /// Called externally when a push notification about issue status arrives.
   void addNotificationMessage(String issueTitle, String newStatus) {
@@ -497,9 +474,6 @@ Guidelines:
     _scrollToBottom();
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Clear & scroll
-  // ──────────────────────────────────────────────────────────────
 
   void clearChat() {
     messages.clear();

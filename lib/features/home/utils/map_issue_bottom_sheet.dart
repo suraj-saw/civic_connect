@@ -161,7 +161,7 @@ class IssueDetailBottomSheet {
                         gradient: LinearGradient(
                           colors: [
                             cs.primaryContainer,
-                            cs.primaryContainer.withOpacity(0.6),
+                            cs.primaryContainer.withValues(alpha: 0.6),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -184,7 +184,7 @@ class IssueDetailBottomSheet {
                             ),
                           ),
                           Text(
-                            '${groupedIssues.length} issue${groupedIssues.length == 1 ? '' : 's'} • '
+                            '${groupedIssues.length} issue${groupedIssues.length == 1 ? '' : 's'} * '
                             '$totalReports report${totalReports == 1 ? '' : 's'} from this location',
                             style: TextStyle(
                               color: cs.onSurfaceVariant,
@@ -198,7 +198,7 @@ class IssueDetailBottomSheet {
                   ],
                 ),
               ),
-              Divider(color: cs.outlineVariant.withOpacity(0.75), height: 1),
+              Divider(color: cs.outlineVariant.withValues(alpha: 0.75), height: 1),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -235,7 +235,7 @@ class IssueDetailBottomSheet {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.14),
+                                  color: statusColor.withValues(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -343,3 +343,4 @@ class _IssueDisplayGroup {
     required this.totalReports,
   });
 }
+

@@ -154,11 +154,11 @@ class ProfilePage extends StatelessWidget {
 
                       _InfoCard(children: [
                         _InfoRow(icon: Icons.person_outline_rounded, label: 'Full Name', value: name, cs: cs),
-                        Divider(height: 1, color: cs.outline.withOpacity(0.1)),
+                        Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                         _InfoRow(icon: Icons.email_outlined, label: 'Email', value: email, cs: cs),
-                        Divider(height: 1, color: cs.outline.withOpacity(0.1)),
+                        Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                         _InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: phone, cs: cs),
-                        Divider(height: 1, color: cs.outline.withOpacity(0.1)),
+                        Divider(height: 1, color: cs.outline.withValues(alpha: 0.1)),
                         _InfoRow(
                           icon: verified ? Icons.verified_user_outlined : Icons.warning_amber_outlined,
                           label: 'Phone Verified',
@@ -253,3 +253,4 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+

@@ -5,7 +5,7 @@ import '../controllers/issue_category_controller.dart';
 import '../controllers/report_issue_controller.dart';
 
 class CategoryDropdown extends GetView<ReportIssueController> {
-  const CategoryDropdown({Key? key}) : super(key: key);
+  const CategoryDropdown({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +24,12 @@ class CategoryDropdown extends GetView<ReportIssueController> {
           if (categoryCtrl.categories.isEmpty) {
             return Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: cs.errorContainer.withOpacity(0.4), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: cs.errorContainer.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
               child: Text('No categories available. Try again later.', style: GoogleFonts.inter(fontSize: 13, color: cs.onErrorContainer)),
             );
           }
           return DropdownButtonFormField<String>(
-            value: controller.selectedCategoryId.value,
+            initialValue: controller.selectedCategoryId.value,
             isExpanded: true,
             hint: const Text('Select a category'),
             decoration: const InputDecoration(),
@@ -46,3 +46,4 @@ class CategoryDropdown extends GetView<ReportIssueController> {
     );
   }
 }
+

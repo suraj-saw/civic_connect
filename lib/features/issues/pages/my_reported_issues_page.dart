@@ -30,7 +30,7 @@ class MyReportedIssuesPage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.28),
+              Theme.of(context).colorScheme.tertiaryContainer.withValues(alpha: 0.28),
               Theme.of(context).colorScheme.surface,
               Theme.of(context).colorScheme.surface,
             ],
@@ -97,7 +97,7 @@ class _CitizenSummaryHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: cs.primary.withOpacity(0.28),
+            color: cs.primary.withValues(alpha: 0.28),
             blurRadius: 14,
             offset: const Offset(0, 7),
           ),
@@ -113,7 +113,7 @@ class _CitizenSummaryHeader extends StatelessWidget {
               children: [
                 Text('Issue Overview', style: GoogleFonts.inter(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('$total total related reports', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                Text('$total total related reports', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
               ],
             ),
           ),
@@ -136,14 +136,14 @@ class _CountPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
           Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
-          Text(label, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 10, fontWeight: FontWeight.w500)),
+          Text(label, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.9), fontSize: 10, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -406,3 +406,4 @@ class _ShimmerList extends StatelessWidget {
     );
   }
 }
+

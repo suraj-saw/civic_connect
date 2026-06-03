@@ -192,9 +192,6 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Filter & Search Section
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _FilterAndSearchSection extends StatefulWidget {
   final HomeAdminController ctrl;
@@ -359,9 +356,6 @@ class _FilterAndSearchSectionState extends State<_FilterAndSearchSection> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Generic filter chip (dropdown style)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _FilterChip<T> extends StatelessWidget {
   final IconData icon;
@@ -460,9 +454,6 @@ class _FilterChip<T> extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reset button
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ResetButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -503,9 +494,6 @@ class _ResetButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Issue Card
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _AdminIssueCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -666,9 +654,6 @@ class _AdminIssueCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Status pill
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatusPill extends StatelessWidget {
   final String status;
@@ -699,9 +684,6 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty state
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final String title;
@@ -749,9 +731,6 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shimmer loading list
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ShimmerList extends StatelessWidget {
   @override

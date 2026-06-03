@@ -188,9 +188,6 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Plain text (user messages)
-// ─────────────────────────────────────────────────────────
 class _PlainTextContent extends StatelessWidget {
   final String text;
   final Color color;
@@ -210,9 +207,6 @@ class _PlainTextContent extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Markdown rendered text (bot messages)
-// ─────────────────────────────────────────────────────────
 class _MarkdownContent extends StatelessWidget {
   final String text;
   final Color textColor;
@@ -280,9 +274,6 @@ class _MarkdownContent extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Notification bubble (centered, special style)
-// ─────────────────────────────────────────────────────────
 class _NotificationBubble extends StatelessWidget {
   final ChatMessage message;
   final ColorScheme cs;
@@ -360,9 +351,6 @@ class _NotificationBubble extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Bubble tail painter
-// ─────────────────────────────────────────────────────────
 class _BubbleTailPainter extends CustomPainter {
   final bool isUser;
   final Color color;

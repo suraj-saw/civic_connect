@@ -8,7 +8,7 @@ import '../controllers/sign_in_controller.dart';
 import '../../../core/routes/app_routes.dart';
 
 class SignInPage extends StatefulWidget {
-  SignInPage({super.key});
+  const SignInPage({super.key});
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -90,7 +90,7 @@ class _SignInPageState extends State<SignInPage> {
                           .fadeIn(delay: 150.ms)
                           .slideX(begin: -0.04),
 
-                      // ── Forgot Password link ──────────────────────────
+                      // Forgot Password link
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -112,7 +112,6 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                         ),
                       ).animate().fadeIn(delay: 170.ms),
-                      // ─────────────────────────────────────────────────
 
                       const SizedBox(height: 20),
                       Obx(() => SizedBox(

@@ -45,6 +45,7 @@ class MyIssuesController extends GetxController {
   }
 
   void _cancelStreams() { _ownSub?.cancel(); _dupSub?.cancel(); }
+  @override
   void refresh() => _startListeners();
 
   @override

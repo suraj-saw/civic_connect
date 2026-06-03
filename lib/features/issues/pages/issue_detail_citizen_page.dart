@@ -79,7 +79,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
               _StatusChip(status: status),
             ],
           ),
-          Divider(height: 20, color: cs.outline.withOpacity(0.12)),
+          Divider(height: 20, color: cs.outline.withValues(alpha: 0.12)),
           Text(
             data['description'] ?? 'No description',
             style: GoogleFonts.inter(
@@ -287,7 +287,7 @@ class IssueDetailCitizenPage extends StatelessWidget {
         Column(
           children: [
             Container(width: 12, height: 12, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-            if (!isLast) Container(width: 2, height: 44, color: cs.outline.withOpacity(0.2)),
+            if (!isLast) Container(width: 2, height: 44, color: cs.outline.withValues(alpha: 0.2)),
           ],
         ),
         const SizedBox(width: 14),
@@ -355,7 +355,7 @@ class _StatusChip extends StatelessWidget {
     final color = _color(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.35))),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.35))),
       child: Text(status.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
     );
   }
@@ -369,3 +369,4 @@ class _StatusChip extends StatelessWidget {
     }
   }
 }
+

@@ -79,9 +79,6 @@ class ChatbotPage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Header
-// ─────────────────────────────────────────────────────────
 class _ChatHeader extends StatelessWidget {
   final ColorScheme cs;
   final bool isDark;
@@ -240,9 +237,6 @@ class _ChatHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Wallpaper
-// ─────────────────────────────────────────────────────────
 class _ChatWallpaper extends StatelessWidget {
   final bool isDark;
   final ColorScheme cs;
@@ -328,9 +322,6 @@ class _WallpaperPatternPainter extends CustomPainter {
       old.color != color;
 }
 
-// ─────────────────────────────────────────────────────────
-// Suggestion chips
-// ─────────────────────────────────────────────────────────
 class _SuggestionChips extends StatelessWidget {
   final ChatbotController ctrl;
   final ColorScheme cs;
@@ -392,9 +383,6 @@ class _SuggestionChips extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Input bar with mic + camera
-// ─────────────────────────────────────────────────────────
 class _ChatInputBar extends StatelessWidget {
   final ChatbotController ctrl;
   final ColorScheme cs;

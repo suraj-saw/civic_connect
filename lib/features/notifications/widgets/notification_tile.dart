@@ -19,9 +19,9 @@ class NotificationTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       constraints: const BoxConstraints(minHeight: AppDimensions.notificationCardMinHeight),
       decoration: BoxDecoration(
-        color: isUnread ? cs.primaryContainer.withOpacity(0.25) : cs.surface,
+        color: isUnread ? cs.primaryContainer.withValues(alpha: 0.25) : cs.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        border: Border.all(color: isUnread ? cs.primary.withOpacity(0.2) : cs.outline.withOpacity(0.1)),
+        border: Border.all(color: isUnread ? cs.primary.withValues(alpha: 0.2) : cs.outline.withValues(alpha: 0.1)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -33,7 +33,7 @@ class NotificationTile extends StatelessWidget {
             children: [
               Container(
                 width: 40, height: 40,
-                decoration: BoxDecoration(color: _bgColor.withOpacity(0.15), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: _bgColor.withValues(alpha: 0.15), shape: BoxShape.circle),
                 child: Icon(_icon, color: _bgColor, size: 20),
               ),
               const SizedBox(width: 12),
@@ -93,7 +93,7 @@ class _NotificationBody extends StatelessWidget {
           Text(item.message, style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant), maxLines: 2, overflow: TextOverflow.ellipsis),
         ],
         const SizedBox(height: 4),
-        Text(_formatTime(item.timestamp), style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant.withOpacity(0.7))),
+        Text(_formatTime(item.timestamp), style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant.withValues(alpha: 0.7))),
       ],
     );
   }
@@ -122,3 +122,4 @@ class _NotificationBody extends StatelessWidget {
     return DateFormat('MMM d').format(dt);
   }
 }
+

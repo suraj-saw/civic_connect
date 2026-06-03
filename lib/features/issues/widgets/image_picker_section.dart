@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/report_issue_controller.dart';
 
 class ImagePickerSection extends GetView<ReportIssueController> {
-  const ImagePickerSection({Key? key}) : super(key: key);
+  const ImagePickerSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class ImagePickerSection extends GetView<ReportIssueController> {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.15)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,7 +30,7 @@ class ImagePickerSection extends GetView<ReportIssueController> {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: controller.selectedImages.isEmpty ? cs.errorContainer.withOpacity(0.4) : cs.primaryContainer,
+                  color: controller.selectedImages.isEmpty ? cs.errorContainer.withValues(alpha: 0.4) : cs.primaryContainer,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text('${controller.selectedImages.length}/5',
@@ -103,3 +103,4 @@ class ImagePickerSection extends GetView<ReportIssueController> {
     );
   }
 }
+

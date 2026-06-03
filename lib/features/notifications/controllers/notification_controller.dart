@@ -102,7 +102,9 @@ class NotificationController extends GetxController {
   int get unreadCount => notifications.where((n) => !n.isRead).length;
 
   Future<void> markAllAsRead() async {
-    for (final n in notifications) _readIds.add(_entryId(n.issueId, n.timestamp));
+    for (final n in notifications) {
+      _readIds.add(_entryId(n.issueId, n.timestamp));
+    }
     notifications.value = notifications.map((n) => n.copyWith(isRead: true)).toList();
     await _saveReadIds();
   }

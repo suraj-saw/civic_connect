@@ -49,14 +49,14 @@ class ReportIssueForm extends GetView<ReportIssueController> {
         decoration: BoxDecoration(
           color:
           hasLocation
-              ? cs.primaryContainer.withOpacity(0.35)
-              : cs.surfaceContainerHighest.withOpacity(0.5),
+              ? cs.primaryContainer.withValues(alpha: 0.35)
+              : cs.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color:
             hasLocation
-                ? cs.primary.withOpacity(0.3)
-                : cs.outline.withOpacity(0.2),
+                ? cs.primary.withValues(alpha: 0.3)
+                : cs.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -137,7 +137,7 @@ class ReportIssueForm extends GetView<ReportIssueController> {
                       )
                     else
                       Container(
-                        color: cs.surfaceContainerHighest.withOpacity(0.7),
+                        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
                         alignment: Alignment.center,
                         child: Text(
                           'Map preview unavailable',
@@ -157,7 +157,7 @@ class ReportIssueForm extends GetView<ReportIssueController> {
                       ),
                     if (!hasLocation)
                       Container(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         alignment: Alignment.center,
                         child: Text(
                           'Waiting for GPS fix...',
@@ -302,7 +302,7 @@ class _LocationAdjusterPageState extends State<_LocationAdjusterPage> {
                       )
                     else
                       Container(
-                        color: cs.surfaceContainerHighest.withOpacity(0.7),
+                        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
                         alignment: Alignment.center,
                         child: Text(
                           'Map preview unavailable',
@@ -325,10 +325,10 @@ class _LocationAdjusterPageState extends State<_LocationAdjusterPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: cs.surface.withOpacity(0.9),
+                                color: cs.surface.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: cs.outline.withOpacity(0.15),
+                                  color: cs.outline.withValues(alpha: 0.15),
                                 ),
                               ),
                               child: Text(
@@ -400,9 +400,8 @@ class _LocationAdjusterPageState extends State<_LocationAdjusterPage> {
                         camera.center.coordinates.lat.toDouble(),
                         camera.center.coordinates.lng.toDouble(),
                       );
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                      }
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
                     },
                     child: const Text('Use this location'),
                   ),

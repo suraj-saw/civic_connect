@@ -279,8 +279,10 @@ class _MapPageState extends State<MapPage> {
       geo.Position? pos = await geo.Geolocator.getLastKnownPosition();
       try {
         pos = await geo.Geolocator.getCurrentPosition(
-          desiredAccuracy: geo.LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 8),
+          locationSettings: const geo.LocationSettings(
+            accuracy: geo.LocationAccuracy.high,
+            timeLimit: Duration(seconds: 8),
+          ),
         );
       } on TimeoutException {
         // Fall back to last known when live fix is slow.

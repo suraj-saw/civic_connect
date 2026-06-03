@@ -52,7 +52,7 @@ class _FormView extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: cs.primaryContainer.withOpacity(0.6),
+                color: cs.primaryContainer.withValues(alpha: 0.6),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -161,7 +161,7 @@ class _SuccessView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Read the email once at build time — no Obx needed since
+    // Read the email once at build time - no Obx needed since
     // emailController.text is a plain String, not a reactive variable
     final sentToEmail = ctrl.emailController.text.trim();
 
@@ -204,7 +204,7 @@ class _SuccessView extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Plain Text widget — no Obx since sentToEmail is a plain String
+          // Plain Text widget - no Obx since sentToEmail is a plain String
           Text(
             'We\'ve sent a password reset link to\n$sentToEmail',
             style: GoogleFonts.inter(
@@ -221,9 +221,9 @@ class _SuccessView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: cs.primaryContainer.withOpacity(0.35),
+              color: cs.primaryContainer.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: cs.primary.withOpacity(0.2)),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
             ),
             child: Column(
               children: [

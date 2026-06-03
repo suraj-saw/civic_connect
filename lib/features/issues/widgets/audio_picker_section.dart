@@ -7,7 +7,7 @@ import 'media_item_card.dart';
 import 'media_player/audio_player_widget.dart';
 
 class AudioPickerSection extends GetView<ReportIssueController> {
-  const AudioPickerSection({Key? key}) : super(key: key);
+  const AudioPickerSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,14 +16,14 @@ class AudioPickerSection extends GetView<ReportIssueController> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outline.withOpacity(0.15)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Voice Note', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
           const SizedBox(height: 2),
-          Text('Optional — describe the issue aloud', style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
+          Text('Optional - describe the issue aloud', style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
           const SizedBox(height: 12),
           Obx(() {
             final audio = controller.selectedAudio.value;
@@ -60,3 +60,4 @@ class AudioPickerSection extends GetView<ReportIssueController> {
     );
   }
 }
+

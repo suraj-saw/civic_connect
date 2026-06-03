@@ -6,9 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:video_compress/video_compress.dart';
 
 class MediaService {
-  // Reduced from 1600 — still sharp on mobile screens, much smaller file
   static const int _imgMaxDim = 1080;
-  // Reduced from 85 — 75 is visually indistinguishable for issue photos
   static const int _imgQuality = 75;
 
   static Future<File> compressImage(File file) async {
@@ -32,7 +30,6 @@ class MediaService {
     }
   }
 
-  // Run multiple image compressions in separate isolates via compute()
   static Future<List<File>> compressImages(List<File> files) async {
     return Future.wait(
       files.map((f) => compute(_compressImageInIsolate, f.path)),
@@ -44,11 +41,9 @@ class MediaService {
       final mp4 = await _ensureMp4(file);
       final info = await VideoCompress.compressVideo(
         mp4.path,
-        // Lowered from MediumQuality — LowQuality is fine for civic issue docs
         quality: VideoQuality.LowQuality,
         deleteOrigin: false,
         includeAudio: true,
-        // Lowered from 30 — 24fps is sufficient and significantly faster
         frameRate: 24,
       );
       if (info?.file != null) return info!.file!;
@@ -67,7 +62,6 @@ class MediaService {
   }
 }
 
-// Top-level function required by compute() — must not be a class method
 Future<File> _compressImageInIsolate(String filePath) async {
   return MediaService.compressImage(File(filePath));
 }
