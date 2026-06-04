@@ -1,5 +1,6 @@
 import 'package:civic_connect/features/splash/pages/splash_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -18,9 +19,11 @@ void main() async {
   // Load environment variables from .env file
   await dotenv.load(fileName: '.env');
   
-  final mapboxPublicToken = MapboxConstants.publicToken;
-  if (mapboxPublicToken.isNotEmpty) {
-    MapboxOptions.setAccessToken(mapboxPublicToken);
+  if (!kIsWeb) {
+    final mapboxPublicToken = MapboxConstants.publicToken;
+    if (mapboxPublicToken.isNotEmpty) {
+      MapboxOptions.setAccessToken(mapboxPublicToken);
+    }
   }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GetStorage.init();
