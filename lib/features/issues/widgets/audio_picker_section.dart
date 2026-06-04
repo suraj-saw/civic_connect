@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,49 +17,78 @@ class AudioPickerSection extends GetView<ReportIssueController> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surface, borderRadius: BorderRadius.circular(16),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.outline.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Voice Note', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+          Text('Voice Note',
+              style:
+              GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
           const SizedBox(height: 2),
-          Text('Optional - describe the issue aloud', style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant)),
+          Text('Optional - describe the issue aloud',
+              style: GoogleFonts.inter(
+                  fontSize: 11, color: cs.onSurfaceVariant)),
           const SizedBox(height: 12),
-          Obx(() {
-            final audio = controller.selectedAudio.value;
-            if (audio != null) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AudioPlayerWidget(filePath: audio.path),
-                  const SizedBox(height: 8),
-                  MediaItemCard(
-                    label: 'Audio Recorded',
-                    fileName: path.basename(audio.path),
-                    onRemove: controller.removeAudio,
-                  ),
-                ],
-              );
-            }
-            final isRecording = controller.isRecording.value;
-            return SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(isRecording ? Icons.stop_circle_outlined : Icons.mic_none_outlined),
-                label: Text(isRecording ? 'Stop Recording' : 'Record Voice Note'),
-                onPressed: controller.toggleAudioRecording,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isRecording ? Colors.red.shade400 : cs.primary,
-                  foregroundColor: Colors.white,
-                ),
+          if (kIsWeb)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
               ),
-            );
-          }),
+              child: Row(children: [
+                Icon(Icons.mic_off_outlined, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Voice recording is not available on web. Use the mobile app to attach audio notes.',
+                    style: GoogleFonts.inter(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ]),
+            )
+          else
+            Obx(() {
+              final audio = controller.selectedAudio.value;
+              if (audio != null) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AudioPlayerWidget(filePath: audio.path),
+                    const SizedBox(height: 8),
+                    MediaItemCard(
+                      label: 'Audio Recorded',
+                      fileName: path.basename(audio.path),
+                      onRemove: controller.removeAudio,
+                    ),
+                  ],
+                );
+              }
+              final isRecording = controller.isRecording.value;
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(isRecording
+                      ? Icons.stop_circle_outlined
+                      : Icons.mic_none_outlined),
+                  label: Text(isRecording
+                      ? 'Stop Recording'
+                      : 'Record Voice Note'),
+                  onPressed: controller.toggleAudioRecording,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                    isRecording ? Colors.red.shade400 : cs.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              );
+            }),
         ],
       ),
     );
   }
 }
-

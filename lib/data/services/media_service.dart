@@ -10,6 +10,7 @@ class MediaService {
   static const int _imgQuality = 75;
 
   static Future<File> compressImage(File file) async {
+    if (kIsWeb) return file;
     try {
       final dir = await getTemporaryDirectory();
       final target =
@@ -31,12 +32,14 @@ class MediaService {
   }
 
   static Future<List<File>> compressImages(List<File> files) async {
+    if (kIsWeb) return files;
     return Future.wait(
       files.map((f) => compute(_compressImageInIsolate, f.path)),
     );
   }
 
   static Future<File> compressVideo(File file) async {
+    if (kIsWeb) return file;
     try {
       final mp4 = await _ensureMp4(file);
       final info = await VideoCompress.compressVideo(

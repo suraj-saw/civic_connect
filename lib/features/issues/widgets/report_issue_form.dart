@@ -10,6 +10,7 @@ import '../../../core/constants/mapbox_constants.dart';
 import '../controllers/report_issue_controller.dart';
 import 'category_dropdown.dart';
 import 'description_field.dart';
+import 'package:flutter/foundation.dart';
 
 class ReportIssueForm extends GetView<ReportIssueController> {
   const ReportIssueForm({super.key});
@@ -47,14 +48,12 @@ class ReportIssueForm extends GetView<ReportIssueController> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color:
-          hasLocation
+          color: hasLocation
               ? cs.primaryContainer.withValues(alpha: 0.35)
               : cs.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color:
-            hasLocation
+            color: hasLocation
                 ? cs.primary.withValues(alpha: 0.3)
                 : cs.outline.withValues(alpha: 0.2),
           ),
@@ -79,10 +78,9 @@ class ReportIssueForm extends GetView<ReportIssueController> {
                       Text(
                         'Issue Location',
                         style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: cs.onSurface,
-                        ),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: cs.onSurface),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -90,101 +88,145 @@ class ReportIssueForm extends GetView<ReportIssueController> {
                             ? 'Lat: ${latitude?.toStringAsFixed(5)}, Lng: ${longitude?.toStringAsFixed(5)}'
                             : 'Fetching GPS location...',
                         style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: cs.onSurfaceVariant,
-                        ),
+                            fontSize: 11, color: cs.onSurfaceVariant),
                       ),
-                      if (hasLocation && latitude != null && longitude != null) ...[
+                      if (hasLocation &&
+                          latitude != null &&
+                          longitude != null) ...[
                         const SizedBox(height: 4),
                         _ResolvedAddressText(
                           latitude: latitude,
                           longitude: longitude,
                           textStyle: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: cs.onSurfaceVariant,
-                          ),
+                              fontSize: 11, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ],
                   ),
                 ),
                 if (hasLocation)
-                  Icon(Icons.check_circle_rounded, color: cs.primary, size: 18),
+                  Icon(Icons.check_circle_rounded,
+                      color: cs.primary, size: 18),
               ],
             ),
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 180,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (MapboxConstants.publicToken.isNotEmpty)
-                      AbsorbPointer(
-                        child: MapWidget(
-                          key: ValueKey(
-                            'issue_location_preview_${latitude ?? 0}_${longitude ?? 0}',
+            // Map preview — hidden on web since Mapbox doesn't support web
+            if (!kIsWeb)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 180,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (MapboxConstants.publicToken.isNotEmpty)
+                        AbsorbPointer(
+                          child: MapWidget(
+                            key: ValueKey(
+                              'issue_location_preview_${latitude ?? 0}_${longitude ?? 0}',
+                            ),
+                            styleUri: MapboxStyles.STANDARD,
+                            cameraOptions: CameraOptions(
+                              center: previewCenter,
+                              zoom: hasLocation ? 16.5 : 3,
+                              pitch: 0,
+                            ),
                           ),
-                          styleUri: MapboxStyles.STANDARD,
-                          cameraOptions: CameraOptions(
-                            center: previewCenter,
-                            zoom: hasLocation ? 16.5 : 3,
-                            pitch: 0,
+                        )
+                      else
+                        Container(
+                          color: cs.surfaceContainerHighest
+                              .withValues(alpha: 0.7),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Map preview unavailable',
+                            style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant),
                           ),
                         ),
-                      )
-                    else
-                      Container(
-                        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Map preview unavailable',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: cs.onSurfaceVariant,
+                      if (hasLocation)
+                        Center(
+                          child: Icon(Icons.location_pin,
+                              size: 40, color: cs.error),
+                        ),
+                      if (!hasLocation)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Waiting for GPS fix...',
+                            style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: cs.onSurface),
                           ),
                         ),
-                      ),
-                    if (hasLocation)
-                      Center(
-                        child: Icon(
-                          Icons.location_pin,
-                          size: 40,
-                          color: cs.error,
-                        ),
-                      ),
-                    if (!hasLocation)
-                      Container(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Waiting for GPS fix...',
+                    ],
+                  ),
+                ),
+              )
+            else
+            // Web: show a simple location info card instead of map
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: hasLocation
+                      ? cs.primaryContainer.withValues(alpha: 0.3)
+                      : cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: hasLocation
+                        ? cs.primary.withValues(alpha: 0.25)
+                        : cs.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(children: [
+                  Icon(
+                    hasLocation ? Icons.check_circle_outline : Icons.location_searching_rounded,
+                    color: hasLocation ? cs.primary : cs.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hasLocation ? 'Location captured' : 'Requesting browser location...',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: cs.onSurface,
+                            color: hasLocation ? cs.primary : cs.onSurfaceVariant,
                           ),
                         ),
-                      ),
-                  ],
-                ),
+                        if (hasLocation) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Lat: ${latitude?.toStringAsFixed(5)}, Lng: ${longitude?.toStringAsFixed(5)}',
+                            style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Map preview is not available on web.',
+                            style: GoogleFonts.inter(fontSize: 11, color: cs.onSurfaceVariant),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ]),
               ),
-            ),
-            if (hasLocation) ...[
+            if (hasLocation && !kIsWeb) ...[
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed:
-                  latitude == null || longitude == null
+                  onPressed: latitude == null || longitude == null
                       ? null
                       : () => _openLocationAdjuster(
-                    context,
-                    latitude,
-                    longitude,
-                  ),
+                      context, latitude, longitude),
                   icon: const Icon(Icons.edit_location_alt_outlined),
                   label: const Text('Adjust location'),
                 ),

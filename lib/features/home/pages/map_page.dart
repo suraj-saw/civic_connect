@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../core/constants/mapbox_constants.dart';
@@ -21,15 +23,18 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  static final _initialDelhi = Point(coordinates: Position(77.2090, 28.6139));
+  static final _initialDelhi =
+  Point(coordinates: Position(77.2090, 28.6139));
   static final _publicToken = MapboxConstants.publicToken;
   static const _standardStyleUri = 'mapbox://styles/mapbox/standard';
   static const _streetsStyleUri = 'mapbox://styles/mapbox/streets-v12';
   static const _satelliteStreetsStyleUri =
       'mapbox://styles/mapbox/satellite-streets-v12';
   static const _outdoorsStyleUri = 'mapbox://styles/mapbox/outdoors-v12';
-  static const _trafficStyleUri = 'mapbox://styles/mapbox/navigation-day-v1';
-  static const _startupCurrentLocationDelay = Duration(milliseconds: 900);
+  static const _trafficStyleUri =
+      'mapbox://styles/mapbox/navigation-day-v1';
+  static const _startupCurrentLocationDelay =
+  Duration(milliseconds: 900);
 
   final Map<String, String> _primaryTypeOptions = const {
     'Default': _streetsStyleUri,
@@ -59,21 +64,23 @@ class _MapPageState extends State<MapPage> {
     super.initState();
     _selectedStyle = _primaryTypeOptions['Default']!;
     _initialLocation = _initialDelhi;
-    _restoreInitialLocation();
+    if (!kIsWeb) {
+      _restoreInitialLocation();
+    } else {
+      setState(() => _hasRestoredLastLocation = true);
+    }
   }
 
   void _setupIssuesListener() {
     if (_markersManager == null) return;
-    _issuesStreamSub = _firestoreService.getVisibleIssuesStream().listen(
-      (snapshot) {
-        if (mounted && _markersManager != null) {
-          _markersManager!.updateMarkers(snapshot.docs);
-        }
-      },
-      onError: (e) {
-        debugPrint('[Issues Stream Error]: $e');
-      },
-    );
+    _issuesStreamSub =
+        _firestoreService.getVisibleIssuesStream().listen((snapshot) {
+          if (mounted && _markersManager != null) {
+            _markersManager!.updateMarkers(snapshot.docs);
+          }
+        }, onError: (e) {
+          debugPrint('[Issues Stream Error]: $e');
+        });
   }
 
   Future<void> _initializeMarkersManager() async {
@@ -84,11 +91,10 @@ class _MapPageState extends State<MapPage> {
           IssueDetailBottomSheet.showGrouped(context, issues);
         },
       );
-      // Setup listener after manager is initialized
       _setupIssuesListener();
-      // Load initial issues
       try {
-        final snapshot = await _firestoreService.getVisibleIssuesStream().first;
+        final snapshot =
+        await _firestoreService.getVisibleIssuesStream().first;
         if (mounted) {
           await _markersManager!.updateMarkers(snapshot.docs);
         }
@@ -101,11 +107,11 @@ class _MapPageState extends State<MapPage> {
   Future<void> _restoreInitialLocation() async {
     final lastLocation = await LocationStorageService.getLastLocation();
     if (!mounted) return;
-
     setState(() {
       if (lastLocation != null) {
         _initialLocation = Point(
-          coordinates: Position(lastLocation.longitude, lastLocation.latitude),
+          coordinates:
+          Position(lastLocation.longitude, lastLocation.latitude),
         );
       }
       _hasRestoredLastLocation = true;
@@ -122,10 +128,8 @@ class _MapPageState extends State<MapPage> {
           children: [
             CircularProgressIndicator(color: cs.primary),
             const SizedBox(height: 16),
-            Text(
-              'Restoring your last map location...',
-              style: TextStyle(color: cs.onSurfaceVariant),
-            ),
+            Text('Restoring your last map location...',
+                style: TextStyle(color: cs.onSurfaceVariant)),
           ],
         ),
       ),
@@ -139,10 +143,12 @@ class _MapPageState extends State<MapPage> {
   }
 
   String get _resolvedStyleUri {
-    if (_showTraffic && _selectedStyle != _satelliteStreetsStyleUri) {
+    if (_showTraffic &&
+        _selectedStyle != _satelliteStreetsStyleUri) {
       return _trafficStyleUri;
     }
-    if (!_showPublicTransport && _selectedStyle == _streetsStyleUri) {
+    if (!_showPublicTransport &&
+        _selectedStyle == _streetsStyleUri) {
       return _standardStyleUri;
     }
     return _selectedStyle;
@@ -157,7 +163,6 @@ class _MapPageState extends State<MapPage> {
   Future<void> _applyResolvedStyle() async {
     final map = _mapboxMap;
     if (map == null) return;
-
     final camera = await map.getCameraState();
     await map.loadStyleURI(_resolvedStyleUri);
     await _markersManager?.onStyleReloaded();
@@ -173,18 +178,23 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Future<bool> _ensureLocationPermission({
-    required bool requestIfNeeded,
-  }) async {
-    if (!await geo.Geolocator.isLocationServiceEnabled()) {
-      return false;
+  Future<bool> _ensureLocationPermission(
+      {required bool requestIfNeeded}) async {
+    if (kIsWeb) {
+      var permission = await geo.Geolocator.checkPermission();
+      if (permission == geo.LocationPermission.denied && requestIfNeeded) {
+        permission = await geo.Geolocator.requestPermission();
+      }
+      return permission == geo.LocationPermission.always ||
+          permission == geo.LocationPermission.whileInUse;
     }
+
+    if (!await geo.Geolocator.isLocationServiceEnabled()) return false;
 
     var permission = await geo.Geolocator.checkPermission();
     if (permission == geo.LocationPermission.denied && requestIfNeeded) {
       permission = await geo.Geolocator.requestPermission();
     }
-
     return permission == geo.LocationPermission.always ||
         permission == geo.LocationPermission.whileInUse;
   }
@@ -192,12 +202,9 @@ class _MapPageState extends State<MapPage> {
   Future<void> _enableLocationIndicator() async {
     final map = _mapboxMap;
     if (map == null) return;
-
-    final hasPermission = await _ensureLocationPermission(
-      requestIfNeeded: false,
-    );
+    final hasPermission =
+    await _ensureLocationPermission(requestIfNeeded: false);
     if (!hasPermission) return;
-
     await map.location.updateSettings(
       LocationComponentSettings(
         enabled: true,
@@ -217,13 +224,10 @@ class _MapPageState extends State<MapPage> {
   Future<void> _startHeadingFollowIfNeeded() async {
     await _headingSub?.cancel();
     _headingSub = null;
-
     if (!_show3D) return;
-    final hasPermission = await _ensureLocationPermission(
-      requestIfNeeded: false,
-    );
+    final hasPermission =
+    await _ensureLocationPermission(requestIfNeeded: false);
     if (!hasPermission) return;
-
     _headingSub = geo.Geolocator.getPositionStream(
       locationSettings: const geo.LocationSettings(
         accuracy: geo.LocationAccuracy.high,
@@ -233,21 +237,16 @@ class _MapPageState extends State<MapPage> {
       final map = _mapboxMap;
       if (map == null || !_show3D) return;
       if (pos.heading.isNaN || pos.heading < 0) return;
-
       final now = DateTime.now();
       final nextBearing = pos.heading.toDouble();
-
-      // Smooth heading updates: ignore tiny changes and rate-limit updates.
       if (_lastAppliedBearing != null) {
         final delta = _headingDelta(_lastAppliedBearing!, nextBearing);
         if (delta < 7) return;
       }
       if (_lastBearingUpdateAt != null &&
-          now.difference(_lastBearingUpdateAt!) <
-              const Duration(milliseconds: 320)) {
+          now.difference(_lastBearingUpdateAt!).inMilliseconds < 320) {
         return;
       }
-
       _lastAppliedBearing = nextBearing;
       _lastBearingUpdateAt = now;
       await map.setCamera(CameraOptions(bearing: nextBearing, pitch: 45));
@@ -257,25 +256,20 @@ class _MapPageState extends State<MapPage> {
   Future<void> _goToCurrentLocation({bool silent = false}) async {
     if (_isLocating) return;
     if (!silent) setState(() => _isLocating = true);
-
     try {
-      final hasPermission = await _ensureLocationPermission(
-        requestIfNeeded: true,
-      );
+      final hasPermission =
+      await _ensureLocationPermission(requestIfNeeded: true);
       if (!hasPermission) {
         final permission = await geo.Geolocator.checkPermission();
         if (permission == geo.LocationPermission.deniedForever) {
           await geo.Geolocator.openAppSettings();
         }
         if (mounted && !silent) {
-          AppSnackbar.show(
-            'Permission Required',
-            'Enable location permission in app settings.',
-          );
+          AppSnackbar.show('Permission Required',
+              'Enable location permission in app settings.');
         }
         return;
       }
-
       geo.Position? pos = await geo.Geolocator.getLastKnownPosition();
       try {
         pos = await geo.Geolocator.getCurrentPosition(
@@ -285,27 +279,25 @@ class _MapPageState extends State<MapPage> {
           ),
         );
       } on TimeoutException {
-        // Fall back to last known when live fix is slow.
+        // Fall back to last known
       }
-
       if (pos == null) {
         if (mounted && !silent) {
-          AppSnackbar.show('Location Unavailable', 'Current location unavailable.');
+          AppSnackbar.show(
+              'Location Unavailable', 'Current location unavailable.');
         }
         return;
       }
-
       final map = _mapboxMap;
       if (map != null) {
         await _enableLocationIndicator();
-        final target = Point(
-          coordinates: Position(pos.longitude, pos.latitude),
-        );
+        final target =
+        Point(coordinates: Position(pos.longitude, pos.latitude));
         await map.easeTo(
-          CameraOptions(center: target, zoom: 16.5, pitch: _show3D ? 45 : 0),
+          CameraOptions(
+              center: target, zoom: 16.5, pitch: _show3D ? 45 : 0),
           MapAnimationOptions(duration: 1000),
         );
-        // Save the location for future app launches
         await LocationStorageService.saveLastLocation(
           latitude: pos.latitude,
           longitude: pos.longitude,
@@ -314,7 +306,8 @@ class _MapPageState extends State<MapPage> {
       }
     } catch (_) {
       if (mounted && !silent) {
-        AppSnackbar.show('Location Error', 'Could not fetch current location.');
+        AppSnackbar.show(
+            'Location Error', 'Could not fetch current location.');
       }
     } finally {
       if (mounted && !silent) {
@@ -354,7 +347,10 @@ class _MapPageState extends State<MapPage> {
                         Expanded(
                           child: Text(
                             'Map type',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                             ),
@@ -370,9 +366,7 @@ class _MapPageState extends State<MapPage> {
                     Text(
                       'Choose how the map looks and what extra details are visible.',
                       style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontSize: 13.5,
-                      ),
+                          color: cs.onSurfaceVariant, fontSize: 13.5),
                     ),
                     const SizedBox(height: 18),
                     MapTypeGrid(
@@ -388,19 +382,19 @@ class _MapPageState extends State<MapPage> {
                     const SizedBox(height: 16),
                     Text(
                       'Map details',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                          fontSize: 21, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 14),
                     MapDetailsGrid(
                       showPublicTransport: _showPublicTransport,
                       showTraffic: _showTraffic,
                       onTogglePublicTransport: () {
-                        setState(
-                          () => _showPublicTransport = !_showPublicTransport,
-                        );
+                        setState(() =>
+                        _showPublicTransport = !_showPublicTransport);
                         setModalState(() {});
                         _applyResolvedStyle();
                       },
@@ -422,6 +416,11 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Web fallback — Mapbox SDK does not support Flutter Web
+    if (kIsWeb) {
+      return _WebMapFallback();
+    }
+
     if (_publicToken.isEmpty) {
       return const MissingTokenView();
     }
@@ -443,7 +442,8 @@ class _MapPageState extends State<MapPage> {
           onMapCreated: (mapboxMap) async {
             _mapboxMap = mapboxMap;
             await mapboxMap.compass.updateSettings(
-              CompassSettings(enabled: true, fadeWhenFacingNorth: false),
+              CompassSettings(
+                  enabled: true, fadeWhenFacingNorth: false),
             );
             await _enableLocationIndicator();
             await _initializeMarkersManager();
@@ -460,8 +460,9 @@ class _MapPageState extends State<MapPage> {
               onTap: _openMapTypeSheet,
             ),
             bottomButton: MapCircleButton(
-              icon:
-                  _show3D ? Icons.explore_off_outlined : Icons.explore_outlined,
+              icon: _show3D
+                  ? Icons.explore_off_outlined
+                  : Icons.explore_outlined,
               tooltip: '3D view',
               onTap: _toggle3D,
             ),
@@ -471,7 +472,9 @@ class _MapPageState extends State<MapPage> {
           right: 12,
           bottom: 24,
           child: MapCircleButton(
-            icon: _isLocating ? Icons.gps_not_fixed_rounded : Icons.my_location,
+            icon: _isLocating
+                ? Icons.gps_not_fixed_rounded
+                : Icons.my_location,
             tooltip: 'Current location',
             onTap: _goToCurrentLocation,
           ),
@@ -486,5 +489,52 @@ class _MapPageState extends State<MapPage> {
     _issuesStreamSub?.cancel();
     _markersManager?.clearAll();
     super.dispose();
+  }
+}
+
+class _WebMapFallback extends StatelessWidget {
+  const _WebMapFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.map_outlined, size: 52, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Map Not Available on Web',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'The interactive map feature is only available on the Android and iOS apps. Please use the mobile app to view and interact with issues on the map.',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: cs.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

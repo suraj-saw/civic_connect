@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
@@ -48,24 +49,32 @@ class ReportIssueController extends GetxController {
   final submitSuccess      = false.obs;
   final issueLocation      = Rx<Map<String, dynamic>?>(null);
 
-  // Tracks background video compression started at record-time
   Future<File>? _videoCompressionFuture;
 
   @override
-  void onInit() { super.onInit(); _fetchLocationIfPermitted(); }
+  void onInit() {
+    super.onInit();
+    _fetchLocationIfPermitted();
+  }
 
   Future<void> _fetchLocationIfPermitted() async {
+    if (kIsWeb) {
+      await _fetchLocation();
+      return;
+    }
     final status = await Permission.locationWhenInUse.status;
     if (status.isGranted && issueLocation.value == null) await _fetchLocation();
   }
 
-  //  IMAGE 
+  // IMAGE
 
   Future<void> pickImage() async {
     final img = await _picker.pickImage(
         source: ImageSource.camera, imageQuality: 90);
     if (img == null) return;
-    selectedImage.value = File(img.path);
+    if (!kIsWeb) {
+      selectedImage.value = File(img.path);
+    }
     selectedImagePath.value = img.path;
     selectedImages.add(img);
     isFormDirty.value = true;
@@ -80,7 +89,7 @@ class ReportIssueController extends GetxController {
       selectedImage.value = null;
       selectedImagePath.value = null;
     } else {
-      selectedImage.value = File(selectedImages.first.path);
+      if (!kIsWeb) selectedImage.value = File(selectedImages.first.path);
       selectedImagePath.value = selectedImages.first.path;
     }
     isFormDirty.value = true;
@@ -93,9 +102,14 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  // VIDEO 
+  // VIDEO
 
   Future<void> captureVideo() async {
+    if (kIsWeb) {
+      AppSnackbar.show('Not Supported', 'Video capture is not supported on web.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     final vid = await _picker.pickVideo(
       source: ImageSource.camera,
       maxDuration: const Duration(seconds: 30),
@@ -122,9 +136,14 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  //  AUDIO 
+  // AUDIO
 
   Future<void> toggleAudioRecording() async {
+    if (kIsWeb) {
+      AppSnackbar.show('Not Supported', 'Audio recording is not supported on web.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     if (isRecording.value) {
       final path = await _recorder.stop();
       isRecording.value = false;
@@ -162,13 +181,17 @@ class ReportIssueController extends GetxController {
     isFormDirty.value = true;
   }
 
-  // LOCATION 
+  // LOCATION
 
   Future<void> _fetchLocation() async {
     try {
+      if (!kIsWeb) {
+        final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) return;
+      }
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-        const LocationSettings(accuracy: LocationAccuracy.medium),
+        locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium),
       );
       issueLocation.value = {
         'latitude': pos.latitude,
@@ -198,6 +221,10 @@ class ReportIssueController extends GetxController {
   }
 
   Future<bool> _promptAndFetchLocation() async {
+    if (kIsWeb) {
+      await _fetchLocation();
+      return issueLocation.value != null;
+    }
     final completer = Completer<bool>();
     Get.dialog(
       AlertDialog(
@@ -234,7 +261,7 @@ class ReportIssueController extends GetxController {
     return completer.future;
   }
 
-  //  VALIDATION
+  // VALIDATION
 
   bool _validateFieldsOnly() {
     if (description.value.trim().isEmpty) {
@@ -255,7 +282,7 @@ class ReportIssueController extends GetxController {
     return true;
   }
 
-  //  DUPLICATE CHECK
+  // DUPLICATE CHECK
 
   Future<DuplicateCheckResult?> _checkForDuplicate() async {
     final location = issueLocation.value;
@@ -267,8 +294,8 @@ class ReportIssueController extends GetxController {
         ?? IssueConstants.duplicateMinimumRadiusInMeters;
     if (lat == null || lng == null) return null;
     try {
-      final snap =
-      await _firestoreService.getIssuesByCategoryForDuplicateCheck(categoryId);
+      final snap = await _firestoreService
+          .getIssuesByCategoryForDuplicateCheck(categoryId);
       final candidates = snap.docs
           .map((d) => IssueModel.fromFirestore(d))
           .where((i) =>
@@ -286,14 +313,18 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  //  SUBMIT ENTRY POINT
+  // SUBMIT ENTRY POINT
 
   Future<void> submitIssue() async {
     if (!_validateFieldsOnly()) return;
     if (issueLocation.value == null) {
       isSubmitting.value = true;
-      final status = await Permission.locationWhenInUse.status;
-      if (status.isGranted) await _fetchLocation();
+      if (!kIsWeb) {
+        final status = await Permission.locationWhenInUse.status;
+        if (status.isGranted) await _fetchLocation();
+      } else {
+        await _fetchLocation();
+      }
       isSubmitting.value = false;
       if (issueLocation.value == null) {
         final obtained = await _promptAndFetchLocation();
@@ -357,30 +388,39 @@ class ReportIssueController extends GetxController {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not logged in');
 
-      final imageFiles = selectedImages.map((x) => File(x.path)).toList();
-      if (imageFiles.isEmpty && selectedImage.value != null) {
-        imageFiles.add(selectedImage.value!);
-      }
-
-
-      final results = await Future.wait([
-        MediaService.compressImages(imageFiles),        // isolate per image
-        if (_videoCompressionFuture != null) _videoCompressionFuture!,
-      ]);
-
-      final compressedImages = (results[0] as List).cast<File>();
-
       uploadProgress.value = 0.35;
 
       final issueRef = _firestore.collection('issues').doc();
 
-      // Upload all media in parallel — images + audio + video simultaneously
-      final mediaUrls = await StorageService.uploadIssueMedia(
-        issueId: issueRef.id,
-        images: compressedImages,
-        audio: selectedAudio.value,
-        video: selectedVideo.value,
-      );
+      // On web, skip compression and file-based upload
+      Map<String, dynamic> mediaUrls;
+      if (kIsWeb) {
+        mediaUrls = {
+          'imageUrls': <String>[],
+          'imageUrl': null,
+          'audioUrl': null,
+          'videoUrl': null,
+        };
+      } else {
+        final imageFiles = selectedImages.map((x) => File(x.path)).toList();
+        if (imageFiles.isEmpty && selectedImage.value != null) {
+          imageFiles.add(selectedImage.value!);
+        }
+
+        final results = await Future.wait([
+          MediaService.compressImages(imageFiles),
+          if (_videoCompressionFuture != null) _videoCompressionFuture!,
+        ]);
+
+        final compressedImages = (results[0] as List).cast<File>();
+
+        mediaUrls = await StorageService.uploadIssueMedia(
+          issueId: issueRef.id,
+          images: compressedImages,
+          audio: selectedAudio.value,
+          video: selectedVideo.value,
+        );
+      }
 
       uploadProgress.value = 0.85;
 
@@ -440,7 +480,7 @@ class ReportIssueController extends GetxController {
     }
   }
 
-  // HELPERS 
+  // HELPERS
 
   void navigateCitizenToDashboard() {
     if (Get.isRegistered<HomeCitizenController>()) {
@@ -476,7 +516,7 @@ class ReportIssueController extends GetxController {
 
   @override
   void onClose() {
-    if (isRecording.value) _recorder.stop();
+    if (!kIsWeb && isRecording.value) _recorder.stop();
     _recorder.dispose();
     descriptionTextController.dispose();
     super.onClose();

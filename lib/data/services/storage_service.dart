@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 class StorageService {
@@ -11,8 +12,16 @@ class StorageService {
     File? audio,
     File? video,
   }) async {
-    final base = 'issues/$issueId';
+    if (kIsWeb) {
+      return {
+        'imageUrls': <String>[],
+        'imageUrl': null,
+        'audioUrl': null,
+        'videoUrl': null,
+      };
+    }
 
+    final base = 'issues/$issueId';
     final results = await Future.wait([
       Future.wait(images.map((img) =>
           _upload(img, '$base/images/${_name(img)}'))),
@@ -38,6 +47,10 @@ class StorageService {
     required List<File> images,
     File? video,
   }) async {
+    if (kIsWeb) {
+      return {'photoUrls': <String>[], 'videoUrl': null};
+    }
+
     final base = 'resolutions/$issueId';
     final ts = DateTime.now().millisecondsSinceEpoch;
 
@@ -73,14 +86,24 @@ class StorageService {
   static String _contentType(File file) {
     final ext = p.extension(file.path).toLowerCase();
     switch (ext) {
-      case '.jpg': case '.jpeg': return 'image/jpeg';
-      case '.png': return 'image/png';
-      case '.mp4': case '.temp': return 'video/mp4';
-      case '.mov': return 'video/quicktime';
-      case '.mp3': return 'audio/mpeg';
-      case '.m4a': return 'audio/mp4';
-      case '.wav': return 'audio/wav';
-      default: return 'application/octet-stream';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.png':
+        return 'image/png';
+      case '.mp4':
+      case '.temp':
+        return 'video/mp4';
+      case '.mov':
+        return 'video/quicktime';
+      case '.mp3':
+        return 'audio/mpeg';
+      case '.m4a':
+        return 'audio/mp4';
+      case '.wav':
+        return 'audio/wav';
+      default:
+        return 'application/octet-stream';
     }
   }
 }

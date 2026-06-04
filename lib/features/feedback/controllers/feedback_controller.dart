@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../models/citizen_model_feedback.dart';
+import 'package:flutter/foundation.dart';
 
 class FeedbackController extends GetxController {
   final String issueId;
@@ -188,19 +189,13 @@ class FeedbackController extends GetxController {
 
   Future<void> submitReopen() async {
     if (reopenImages.isEmpty) {
-      AppSnackbar.show(
-        'Photo Required',
-        'Please attach at least 1 photo.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.show('Photo Required', 'Please attach at least 1 photo.',
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     if (reopenDescription.value.trim().isEmpty) {
-      AppSnackbar.show(
-        'Required',
-        'Please enter a description.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.show('Required', 'Please enter a description.',
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     final email = _auth.currentUser?.email;
@@ -209,15 +204,20 @@ class FeedbackController extends GetxController {
     try {
       final ts = DateTime.now().millisecondsSinceEpoch;
       final base = 'reopen/$issueId';
-      final photoUrls = await Future.wait(
-        reopenImages.map((img) async {
-          final ref = FirebaseStorage.instance.ref().child(
-            '$base/img_${ts}_${reopenImages.indexOf(img)}.jpg',
-          );
-          await ref.putFile(File(img.path));
-          return ref.getDownloadURL();
-        }),
-      );
+
+      List<String> photoUrls = [];
+      if (!kIsWeb) {
+        photoUrls = await Future.wait(
+          reopenImages.map((img) async {
+            final ref = FirebaseStorage.instance
+                .ref()
+                .child('$base/img_${ts}_${reopenImages.indexOf(img)}.jpg');
+            await ref.putFile(File(img.path));
+            return ref.getDownloadURL();
+          }),
+        );
+      }
+
       final batch = _firestore.batch();
       final issueRef = _firestore.collection('issues').doc(issueId);
       batch.update(issueRef, {
@@ -253,11 +253,8 @@ class FeedbackController extends GetxController {
       );
     } catch (e) {
       debugPrint('[Reopen] Error: $e');
-      AppSnackbar.show(
-        'Error',
-        'Could not reopen the issue. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.show('Error', 'Could not reopen the issue. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isReopening.value = false;
     }
